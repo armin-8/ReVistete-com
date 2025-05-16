@@ -1,52 +1,110 @@
-import React, { useEffect } from "react"
-import rigoImageUrl from "../assets/img/rigo-baby.jpg";
-import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
 
-export const Home = () => {
+import React from "react";
 
-	const { store, dispatch } = useGlobalReducer()
-
-	const loadMessage = async () => {
-		try {
-			const backendUrl = import.meta.env.VITE_BACKEND_URL
-
-			if (!backendUrl) throw new Error("VITE_BACKEND_URL is not defined in .env file")
-
-			const response = await fetch(backendUrl + "/api/hello")
-			const data = await response.json()
-
-			if (response.ok) dispatch({ type: "set_hello", payload: data.message })
-
-			return data
-
-		} catch (error) {
-			if (error.message) throw new Error(
-				`Could not fetch the message from the backend.
-				Please check if the backend is running and the backend port is public.`
-			);
-		}
-
-	}
-
-	useEffect(() => {
-		loadMessage()
-	}, [])
-
+const Home = () => {
 	return (
-		<div className="text-center mt-5">
-			<h1 className="display-4">Hello Rigo!!</h1>
-			<p className="lead">
-				<img src={rigoImageUrl} className="img-fluid rounded-circle mb-3" alt="Rigo Baby" />
-			</p>
-			<div className="alert alert-info">
-				{store.message ? (
-					<span>{store.message}</span>
-				) : (
-					<span className="text-danger">
-						Loading message from the backend (make sure your python 🐍 backend is running)...
-					</span>
-				)}
+		<div className="container-fluid p-0">
+			{/* Hero Section */}
+			<div
+				className="position-relative d-flex align-items-center"
+				style={{
+					backgroundImage:
+						"url('https://media.istockphoto.com/id/1805986697/es/foto/side-hustle-influencer-de-negocios-en-l%C3%ADnea.jpg?s=612x612&w=0&k=20&c=1OsN_JgXFfSgIeIeoMT5A_kVUxi3_Py5pf-nbYXkO9s=')",
+					backgroundSize: "cover",
+					backgroundPosition: "center",
+					minHeight: "600px",
+					color: "white",
+				}}
+			>
+				<div
+					className="position-absolute top-0 start-0 w-100 h-100"
+					style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+				></div>
+
+				<div className="container position-relative">
+					<div className="row">
+						<div className="col-md-6 d-flex flex-column justify-content-end" style={{ minHeight: "400px" }}>
+							<h2 className="mb-3">Convierte tu ropa en dinero</h2>
+							<p className="mb-4">Si ya no lo usas, ¡véndelo!</p>
+							<a
+								href="/sign-up"
+								className="btn btn-primary btn-lg"
+								rel="nofollow"
+							>
+								Empezar a vender &gt;
+							</a>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			
+			<div className="container my-5">
+				<h2 className="display-5 mb-4">Categorías</h2>
+				<div className="row g-4">
+					{categories.map((category) => (
+						<div key={category.id} className="col-6 col-md-4 col-lg-4">
+							<div className="card h-100 border-0 shadow-sm">
+								<div className="position-relative">
+									<img
+										src={category.image}
+										className="card-img-top"
+										alt={category.name}
+										style={{ height: "200px", objectFit: "cover" }}
+									/>
+									<div
+										className="position-absolute bottom-0 start-0 w-100 p-3"
+										style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)" }}
+									>
+										<h5 className="card-title m-0 text-white">{category.name}</h5>
+									</div>
+								</div>
+								<div className="card-body">
+									<a href={`/category/${category.id}`} className="stretched-link text-decoration-none">
+										Ver productos
+									</a>
+								</div>
+							</div>
+						</div>
+					))}
+				</div>
 			</div>
 		</div>
 	);
-}; 
+};
+
+// Category data - limited to 6 categories
+const categories = [
+	{
+		id: 1,
+		name: "Vestidos",
+		image: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+	},
+	{
+		id: 2,
+		name: "Tenis",
+		image: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+	},
+	{
+		id: 3,
+		name: "Relojes",
+		image: "https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+	},
+	{
+		id: 4,
+		name: "Blusas",
+		image: "https://images.unsplash.com/photo-1554568218-0f1715e72254?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+	},
+	{
+		id: 5,
+		name: "Pantalones",
+		image: "https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+	},
+	{
+		id: 6,
+		name: "Camisas",
+		image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+	}
+];
+
+export default Home;
