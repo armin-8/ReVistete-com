@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Link } from "react-router-dom";
 
 const Home = () => {
 	return (
@@ -26,13 +27,9 @@ const Home = () => {
 						<div className="col-md-6 d-flex flex-column justify-content-end" style={{ minHeight: "400px" }}>
 							<h2 className="mb-3">Convierte tu ropa en dinero</h2>
 							<p className="mb-4">Si ya no lo usas, ¡véndelo!</p>
-							<a
-								href="/sign-up"
-								className="btn btn-danger btn-lg"
-								rel="nofollow"
-							>
+							<Link to="/seller-signup" className="btn btn-danger btn-lg">
 								Empezar a vender
-							</a>
+							</Link>
 						</div>
 					</div>
 				</div>

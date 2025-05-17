@@ -47,10 +47,12 @@ export const Navbar = () => {
 
 	// Manejar click en vender (redirige a registro o a crear anuncio)
 	const handleSellClick = () => {
-		if (store.auth?.isAuthenticated) {
-			navigate("/sell-item");
+		if (store.auth?.isAuthenticated && store.auth?.user?.role === "seller") {
+			navigate("/seller-dashboard");
+		} else if (store.auth?.isAuthenticated) {
+			navigate("/become-seller"); // Ruta para convertirse en vendedor si ya es usuario
 		} else {
-			navigate("/signup?role=seller");
+			navigate("/seller-signup"); // Ruta para registro de vendedor
 		}
 	};
 
