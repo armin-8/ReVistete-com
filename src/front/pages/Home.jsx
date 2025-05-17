@@ -28,17 +28,17 @@ const Home = () => {
 							<p className="mb-4">Si ya no lo usas, ¡véndelo!</p>
 							<a
 								href="/sign-up"
-								className="btn btn-primary btn-lg"
+								className="btn btn-danger btn-lg"
 								rel="nofollow"
 							>
-								Empezar a vender &gt;
+								Empezar a vender
 							</a>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			
+
 			<div className="container my-5">
 				<h2 className="display-5 mb-4">Categorías</h2>
 				<div className="row g-4">
@@ -82,13 +82,13 @@ const categories = [
 	},
 	{
 		id: 2,
-		name: "Tenis",
-		image: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+		name: "Abrigos",
+		image: "https://images.pexels.com/photos/7679798/pexels-photo-7679798.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
 	},
 	{
 		id: 3,
-		name: "Relojes",
-		image: "https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+		name: "Deportivo",
+		image: "https://images.pexels.com/photos/5037318/pexels-photo-5037318.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
 	},
 	{
 		id: 4,
