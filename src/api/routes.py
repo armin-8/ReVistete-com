@@ -192,3 +192,34 @@ def create_product():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+
+
+@api.route('/login', methods=['POST'])
+def login():
+    if not request.is_json:
+        return jsonify({"error": "Missing JSON in request"}), 400
+
+    data = request.get_json()
+
+    # Validar campos requeridos
+    if "email" not in data or "password" not in data:
+        return jsonify({"error": "Missing email or password"}), 400
+
+    # Buscar usuario por email
+    user = User.query.filter_by(email=data["email"]).first()
+
+    # Verificar si el usuario existe y la contraseña es correcta
+    if not user or not user.check_password(data["password"]):
+        return jsonify({"error": "Invalid email or password"}), 401
+
+    # Crear token de acceso
+    access_token = create_access_token(
+        identity=str(user.id),
+        expires_delta=datetime.timedelta(hours=24)
+    )
+
+    return jsonify({
+        "token": access_token,
+        "user": user.serialize()
+    }), 200
