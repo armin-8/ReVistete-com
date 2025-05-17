@@ -9,7 +9,7 @@ const Home = () => {
 				className="position-relative d-flex align-items-center"
 				style={{
 					backgroundImage:
-						"url('https://media.istockphoto.com/id/1805986697/es/foto/side-hustle-influencer-de-negocios-en-l%C3%ADnea.jpg?s=612x612&w=0&k=20&c=1OsN_JgXFfSgIeIeoMT5A_kVUxi3_Py5pf-nbYXkO9s=')",
+						"url('https://images.pexels.com/photos/7667449/pexels-photo-7667449.jpeg')",
 					backgroundSize: "cover",
 					backgroundPosition: "center",
 					minHeight: "600px",
