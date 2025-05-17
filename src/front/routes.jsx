@@ -11,6 +11,7 @@ import Single from "/src/front/pages/Single.jsx";
 import Layout from "/src/front/pages/Layout.jsx";
 import SellerSignup from "./pages/SellerSignup";
 import SellerDashboard from "./pages/SellerDashboard";
+import Login from "./pages/Login";
 
 
 export const router = createBrowserRouter(
@@ -30,6 +31,7 @@ export const router = createBrowserRouter(
       <Route path="/demo" element={<Demo />} />
       <Route path="/seller-signup" element={<SellerSignup />} /> {/* Nueva ruta */}
       <Route path="/seller-dashboard" element={<SellerDashboard />} />
+      <Route path="/login" element={<Login />} />
     </Route>
   )
 );
