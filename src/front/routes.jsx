@@ -10,6 +10,7 @@ import Demo from "/src/front/pages/Demo.jsx";
 import Single from "/src/front/pages/Single.jsx";
 import Layout from "/src/front/pages/Layout.jsx";
 import SellerSignup from "./pages/SellerSignup";
+import SellerDashboard from "./pages/SellerDashboard";
 
 
 export const router = createBrowserRouter(
@@ -28,6 +29,7 @@ export const router = createBrowserRouter(
       <Route path="/single/:theId" element={<Single />} />  {/* Dynamic route for single items */}
       <Route path="/demo" element={<Demo />} />
       <Route path="/seller-signup" element={<SellerSignup />} /> {/* Nueva ruta */}
+      <Route path="/seller-dashboard" element={<SellerDashboard />} />
     </Route>
   )
 );
