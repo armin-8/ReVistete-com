@@ -12,6 +12,8 @@ import Layout from "/src/front/pages/Layout.jsx";
 import SellerSignup from "./pages/SellerSignup";
 import SellerDashboard from "./pages/SellerDashboard";
 import Login from "./pages/Login";
+import BuyerSignup from "./pages/BuyerSignup";
+
 
 
 export const router = createBrowserRouter(
@@ -32,6 +34,8 @@ export const router = createBrowserRouter(
       <Route path="/seller-signup" element={<SellerSignup />} /> {/* Nueva ruta */}
       <Route path="/seller-dashboard" element={<SellerDashboard />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/buyer-signup" element={<BuyerSignup />} />
+
     </Route>
   )
 );

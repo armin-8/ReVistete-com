@@ -45,7 +45,11 @@ class User(db.Model):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow)
 
-    # Relaciones
+   # Campos adicionales para compradores
+    address: Mapped[str] = mapped_column(String(200), nullable=True)
+    city: Mapped[str] = mapped_column(String(100), nullable=True)
+    zip_code: Mapped[str] = mapped_column(String(20), nullable=True)
+
     products = relationship(
         "Product", back_populates="seller", cascade="all, delete-orphan")
 
