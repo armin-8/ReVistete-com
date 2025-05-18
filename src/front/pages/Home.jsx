@@ -22,17 +22,38 @@ const Home = () => {
 					style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
 				></div>
 
-				<div className="container position-relative">
+				{/* // Añadir a Home.jsx cerca del botón "Empezar a vender" */}
+
+				<div className="container my-5">
 					<div className="row">
-						<div className="col-md-6 d-flex flex-column justify-content-end" style={{ minHeight: "400px" }}>
-							<h2 className="mb-3">Convierte tu ropa en dinero</h2>
-							<p className="mb-4">Si ya no lo usas, ¡véndelo!</p>
-							<Link to="/seller-signup" className="btn btn-danger btn-lg">
-								Empezar a vender
-							</Link>
+						<div className="col-md-6">
+							<div className="card shadow-sm mb-4">
+								<div className="card-body text-center p-4">
+									<i className="fas fa-tshirt fa-3x text-primary mb-3"></i>
+									<h3>¿Quieres vender?</h3>
+									<p>Convierte tu ropa poco usada en dinero y dale una segunda vida</p>
+									<Link to="/seller-signup" className="btn btn-danger btn-lg">
+										Empezar a vender
+									</Link>
+								</div>
+							</div>
+						</div>
+
+						<div className="col-md-6">
+							<div className="card shadow-sm mb-4">
+								<div className="card-body text-center p-4">
+									<i className="fas fa-shopping-bag fa-3x text-success mb-3"></i>
+									<h3>¿Buscas comprar?</h3>
+									<p>Descubre prendas únicas a precios increíbles con garantía de calidad</p>
+									<Link to="/buyer-signup" className="btn btn-success btn-lg">
+										Registrarse para comprar
+									</Link>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
+
 			</div>
 
 

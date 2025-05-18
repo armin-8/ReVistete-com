@@ -194,7 +194,6 @@ def create_product():
         return jsonify({"error": str(e)}), 500
 
 
-
 @api.route('/login', methods=['POST'])
 def login():
     if not request.is_json:
@@ -223,3 +222,65 @@ def login():
         "token": access_token,
         "user": user.serialize()
     }), 200
+
+
+
+@api.route('/register/buyer', methods=['POST'])
+def register_buyer():
+    if not request.is_json:
+        return jsonify({"error": "Missing JSON in request"}), 400
+
+    data = request.get_json()
+
+    # Validar campos requeridos
+    required_fields = ["email", "password", "first_name",
+                       "last_name", "username", "address", "city"]
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return jsonify({"error": f"Missing required field: {field}"}), 400
+
+    # Verificar si el email ya existe
+    if User.query.filter_by(email=data["email"]).first():
+        return jsonify({"error": "Email already exists"}), 400
+
+    # Verificar si el username ya existe
+    if User.query.filter_by(username=data["username"]).first():
+        return jsonify({"error": "Username already exists"}), 400
+
+    # Crear nuevo usuario con rol de comprador
+    new_user = User(
+        email=data["email"],
+        password=data["password"],
+        first_name=data["first_name"],
+        last_name=data["last_name"],
+        username=data["username"],
+        role="buyer",
+        is_active=True
+    )
+
+    # Crear o actualizar información de dirección
+    # Esto requiere un modelo adicional o campos en el modelo usuario
+    # Para simplificar, vamos a almacenar estos datos en una propiedad
+    new_user.address = data["address"]
+    new_user.city = data["city"]
+    new_user.zip_code = data.get("zip_code", "")
+
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+
+        # Crear token de acceso
+        access_token = create_access_token(
+            identity=str(new_user.id),
+            expires_delta=datetime.timedelta(hours=24)
+        )
+
+        return jsonify({
+            "message": "Buyer registered successfully",
+            "token": access_token,
+            "user": new_user.serialize()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
