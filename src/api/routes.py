@@ -27,6 +27,7 @@ from api.models import db, User, Product, ProductImage
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask import Blueprint, jsonify
 import datetime
 
 api = Blueprint('api', __name__)
@@ -273,3 +274,16 @@ def register_buyer():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+
+@api.route('/categories', methods=['GET'])
+def get_categories():
+    categories = [
+        {"id": 1, "name": "Vestidos", "image": "/images/vestidos.jpg"},
+        {"id": 2, "name": "Abrigos", "image": "/images/abrigos.jpg"},
+        {"id": 3, "name": "Deportivo", "image": "/images/deportivo.jpg"},
+        {"id": 4, "name": "Blusas", "image": "/images/blusas.jpg"},
+        {"id": 5, "name": "Pantalones", "image": "/images/pantalones.jpg"},
+        {"id": 6, "name": "Camisas", "image": "/images/camisas.jpg"},
+    ]
+    return jsonify(categories), 200

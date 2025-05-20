@@ -21,6 +21,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import ReVistete2 from "../assets/img/ReVistete2.png";
 
 export const Navbar = () => {
 	const { store, dispatch } = useGlobalReducer();
@@ -64,8 +65,8 @@ export const Navbar = () => {
 	return (
 		<nav className={navbarClass}>
 			<div className="container">
-				{/* Logo */}
-				<Link to="/" className="navbar-brand fw-bold">
+				<Link to="/" className="navbar-brand fw-bold d-flex align-items-center">
+					<img src={ReVistete2} className="me-2" style={{ height: '50px' }} />
 					ReVistete
 				</Link>
 
@@ -101,7 +102,7 @@ export const Navbar = () => {
 							<ul className="dropdown-menu" aria-labelledby="navbarDropdownHombre">
 								<li><Link className="dropdown-item" to="/hombre/camisetas">Camisetas</Link></li>
 								<li><Link className="dropdown-item" to="/hombre/pantalones">Pantalones</Link></li>
-								<li><Link className="dropdown-item" to="/hombre/zapatos">Zapatos</Link></li>
+								<li><Link className="dropdown-item" to="/hombre/zapatos">Abrigos</Link></li>
 								<li><hr className="dropdown-divider" /></li>
 								<li><Link className="dropdown-item" to="/hombre/ofertas">Ofertas</Link></li>
 								<li><Link className="dropdown-item" to="/hombre">Ver todo</Link></li>
@@ -123,7 +124,7 @@ export const Navbar = () => {
 							<ul className="dropdown-menu" aria-labelledby="navbarDropdownMujer">
 								<li><Link className="dropdown-item" to="/mujer/blusas">Blusas</Link></li>
 								<li><Link className="dropdown-item" to="/mujer/vestidos">Vestidos</Link></li>
-								<li><Link className="dropdown-item" to="/mujer/zapatos">Zapatos</Link></li>
+								<li><Link className="dropdown-item" to="/mujer/zapatos">Abrigos</Link></li>
 								<li><hr className="dropdown-divider" /></li>
 								<li><Link className="dropdown-item" to="/mujer/ofertas">Ofertas</Link></li>
 								<li><Link className="dropdown-item" to="/mujer">Ver todo</Link></li>
