@@ -229,19 +229,24 @@ def login():
 def register_buyer():
     if not request.is_json:
         return jsonify({"error": "Missing JSON in request"}), 400
+
     data = request.get_json()
+
     # Validar campos requeridos
     required_fields = ["email", "password", "first_name",
                        "last_name", "username", "address", "city"]
     for field in required_fields:
         if field not in data or not data[field]:
             return jsonify({"error": f"Missing required field: {field}"}), 400
+
     # Verificar si el email ya existe
     if User.query.filter_by(email=data["email"]).first():
         return jsonify({"error": "Email already exists"}), 400
+
     # Verificar si el username ya existe
     if User.query.filter_by(username=data["username"]).first():
         return jsonify({"error": "Username already exists"}), 400
+
     # Crear nuevo usuario con rol de comprador
     new_user = User(
         email=data["email"],
@@ -258,9 +263,11 @@ def register_buyer():
     new_user.address = data["address"]
     new_user.city = data["city"]
     new_user.zip_code = data.get("zip_code", "")
+
     try:
         db.session.add(new_user)
         db.session.commit()
+
         # Crear token de acceso
         access_token = create_access_token(
             identity=str(new_user.id),

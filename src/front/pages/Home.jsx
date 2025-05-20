@@ -22,17 +22,8 @@ const Home = () => {
 					style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
 				></div>
 
-				<div className="container position-relative">
-					<div className="row">
-						<div className="col-md-6 d-flex flex-column justify-content-end" style={{ minHeight: "400px" }}>
-							<h2 className="mb-3">Convierte tu ropa en dinero</h2>
-							<p className="mb-4">Si ya no lo usas, ¡véndelo!</p>
-							<Link to="/seller-signup" className="btn btn-danger btn-lg">
-								Empezar a vender
-							</Link>
-						</div>
-					</div>
-				</div>
+				{/* // Añadir a Home.jsx cerca del botón "Empezar a vender" */}
+
 				<div className="container my-5">
 					<div className="row">
 						<div className="col-md-6">

@@ -1,7 +1,9 @@
 // src/front/pages/BuyerSignup.jsx
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+
 export const BuyerSignup = () => {
     const [formData, setFormData] = useState({
         email: "",
@@ -18,28 +20,35 @@ export const BuyerSignup = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const navigate = useNavigate();
     const { dispatch } = useGlobalReducer();
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
+
         // Limpiar error específico cuando el usuario comienza a corregirlo
         if (errors[name]) {
             setErrors({ ...errors, [name]: "" });
         }
     };
+
     const validateForm = () => {
         const newErrors = {};
+
         // Validaciones similares a las del registro de vendedor
         if (!formData.email) {
             newErrors.email = "El correo electrónico es obligatorio";
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
             newErrors.email = "Formato de correo electrónico inválido";
         }
+
         if (!formData.firstName.trim()) {
             newErrors.firstName = "El nombre es obligatorio";
         }
+
         if (!formData.lastName.trim()) {
             newErrors.lastName = "Los apellidos son obligatorios";
         }
+
         if (!formData.username.trim()) {
             newErrors.username = "El nombre de usuario es obligatorio";
         } else if (formData.username.length < 4) {
@@ -50,28 +59,38 @@ export const BuyerSignup = () => {
         } else if (formData.password.length < 6) {
             newErrors.password = "La contraseña debe tener al menos 6 caracteres";
         }
+
         if (formData.password !== formData.confirmPassword) {
             newErrors.confirmPassword = "Las contraseñas no coinciden";
         }
+
         // Validaciones adicionales para compradores
         if (!formData.address.trim()) {
             newErrors.address = "La dirección es obligatoria";
         }
+
         if (!formData.city.trim()) {
             newErrors.city = "La ciudad es obligatoria";
         }
+
         return newErrors;
     };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         const formErrors = validateForm();
+
         if (Object.keys(formErrors).length > 0) {
             setErrors(formErrors);
             return;
         }
+
         setIsSubmitting(true);
+
         try {
             const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
             const response = await fetch(`${backendUrl}/api/register/buyer`, {
                 method: "POST",
                 headers: {
@@ -89,10 +108,13 @@ export const BuyerSignup = () => {
                     role: "buyer"
                 }),
             });
+
             const data = await response.json();
+
             if (!response.ok) {
                 throw new Error(data.message || "Error en el registro");
             }
+
             // Registro exitoso
             dispatch({
                 type: "auth_success",
@@ -101,8 +123,10 @@ export const BuyerSignup = () => {
                     user: data.user
                 }
             });
+
             // Redireccionar al dashboard de comprador o a la página principal
             navigate("/");
+
         } catch (error) {
             setErrors({
                 general: error.message || "Ocurrió un error durante el registro"
@@ -118,9 +142,11 @@ export const BuyerSignup = () => {
                     <div className="card shadow">
                         <div className="card-body p-4">
                             <h2 className="text-center mb-4">Registro de Comprador</h2>
+
                             {errors.general && (
                                 <div className="alert alert-danger">{errors.general}</div>
                             )}
+
                             <form onSubmit={handleSubmit}>
                                 <div className="mb-3">
                                     <label htmlFor="email" className="form-label">Correo electrónico</label>
