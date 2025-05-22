@@ -27,6 +27,7 @@ from api.models import db, User, Product, ProductImage
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from werkzeug.security import generate_password_hash
 import datetime
 
 api = Blueprint('api', __name__)
@@ -224,7 +225,6 @@ def login():
     }), 200
 
 
-
 @api.route('/register/buyer', methods=['POST'])
 def register_buyer():
     if not request.is_json:
@@ -280,6 +280,143 @@ def register_buyer():
             "token": access_token,
             "user": new_user.serialize()
         }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+# Endpoint para obtener las ventas del vendedor
+
+
+@api.route('/seller/sales', methods=['GET'])
+@jwt_required()
+def get_seller_sales():
+    # Obtener ID del usuario del token
+    user_id = get_jwt_identity()
+
+    # Verificar que el usuario existe y es vendedor
+    user = User.query.get(int(user_id))
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if user.role != "seller":
+        return jsonify({"error": "Access denied, user is not a seller"}), 403
+
+    # Obtener ventas del vendedor
+    sales = Sale.query.filter_by(seller_id=user.id).order_by(
+        Sale.created_at.desc()).all()
+
+    # Calcular ganancias totales
+    total_earnings = sum(sale.price for sale in sales)
+
+    return jsonify({
+        "sales": [sale.serialize() for sale in sales],
+        "total_earnings": total_earnings,
+        "total_sales": len(sales)
+    }), 200
+
+# Endpoint para obtener el perfil del vendedor
+
+
+@api.route('/seller/profile', methods=['GET'])
+@jwt_required()
+def get_seller_profile():
+    # Obtener ID del usuario del token
+    user_id = get_jwt_identity()
+
+    # Verificar que el usuario existe y es vendedor
+    user = User.query.get(int(user_id))
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if user.role != "seller":
+        return jsonify({"error": "Access denied, user is not a seller"}), 403
+
+    return jsonify({
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "username": user.username,
+        "email": user.email,
+        "phone": user.phone,
+        "store_name": user.store_name,
+        "store_description": user.store_description
+    }), 200
+
+# Endpoint para actualizar el perfil del vendedor
+
+
+@api.route('/seller/profile', methods=['PUT'])
+@jwt_required()
+def update_seller_profile():
+    # Obtener ID del usuario del token
+    user_id = get_jwt_identity()
+
+    # Verificar que el usuario existe y es vendedor
+    user = User.query.get(int(user_id))
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if user.role != "seller":
+        return jsonify({"error": "Access denied, user is not a seller"}), 403
+
+    # Validar datos del request
+    if not request.is_json:
+        return jsonify({"error": "Missing JSON in request"}), 400
+
+    data = request.get_json()
+
+    # Validar campos requeridos
+    required_fields = ["first_name", "last_name", "username", "email"]
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return jsonify({"error": f"Missing required field: {field}"}), 400
+
+    # Verificar si el email ya existe (para otro usuario)
+    if data["email"] != user.email:
+        existing_email = User.query.filter_by(email=data["email"]).first()
+        if existing_email:
+            return jsonify({"error": "Email already exists"}), 400
+
+    # Verificar si el username ya existe (para otro usuario)
+    if data["username"] != user.username:
+        existing_username = User.query.filter_by(
+            username=data["username"]).first()
+        if existing_username:
+            return jsonify({"error": "Username already exists"}), 400
+
+    # Verificar contraseña actual si se quiere cambiar
+    if data.get("new_password"):
+        if not data.get("current_password"):
+            return jsonify({"error": "Current password is required to change password"}), 400
+
+        if not user.check_password(data["current_password"]):
+            return jsonify({"error": "Current password is incorrect"}), 400
+
+        if len(data["new_password"]) < 6:
+            return jsonify({"error": "New password must be at least 6 characters long"}), 400
+
+    try:
+        # Actualizar campos básicos
+        user.first_name = data["first_name"]
+        user.last_name = data["last_name"]
+        user.username = data["username"]
+        user.email = data["email"]
+        user.phone = data.get("phone", user.phone)
+        user.store_name = data.get("store_name", user.store_name)
+        user.store_description = data.get(
+            "store_description", user.store_description)
+
+        # Actualizar contraseña si se proporcionó
+        if data.get("new_password"):
+            user.password = generate_password_hash(data["new_password"])
+
+        db.session.commit()
+
+        return jsonify({
+            "message": "Profile updated successfully",
+            "user": user.serialize()
+        }), 200
 
     except Exception as e:
         db.session.rollback()

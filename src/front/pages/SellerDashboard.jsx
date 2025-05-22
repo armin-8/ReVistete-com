@@ -271,11 +271,7 @@ export const SellerDashboard = () => {
                             <div className="card-body">
                                 <h2 className="card-title mb-4">Mis Ventas</h2>
 
-                                <div className="text-center my-5">
-                                    <i className="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
-                                    <h4>No tienes ventas todavía</h4>
-                                    <p className="text-muted">Tus ventas aparecerán aquí una vez que los compradores adquieran tus productos</p>
-                                </div>
+                                <SalesSection />
                             </div>
                         </div>
                     )}
@@ -286,19 +282,7 @@ export const SellerDashboard = () => {
                             <div className="card-body">
                                 <h2 className="card-title mb-4">Configuración de la Cuenta</h2>
 
-                                <form>
-                                    <div className="mb-3">
-                                        <label htmlFor="storeName" className="form-label">Nombre de la Tienda</label>
-                                        <input type="text" className="form-control" id="storeName" placeholder="Ingresa el nombre de tu tienda" />
-                                    </div>
-
-                                    <div className="mb-3">
-                                        <label htmlFor="storeDescription" className="form-label">Descripción</label>
-                                        <textarea className="form-control" id="storeDescription" rows="3" placeholder="Describe tu tienda en pocas palabras"></textarea>
-                                    </div>
-
-                                    <button type="submit" className="btn btn-primary">Guardar Cambios</button>
-                                </form>
+                                <ProfileSettings />
                             </div>
                         </div>
                     )}
@@ -307,6 +291,554 @@ export const SellerDashboard = () => {
         </div>
     );
 };
+
+// Componente para mostrar las ventas
+
+const SalesSection = () => {
+    const [sales, setSales] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [totalEarnings, setTotalEarnings] = useState(0);
+    const { store } = useGlobalReducer();
+
+    useEffect(() => {
+        loadSales();
+    }, []);
+
+    const loadSales = async () => {
+        try {
+            setIsLoading(true);
+            const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+            const response = await fetch(`${backendUrl}/api/seller/sales`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${store.auth?.token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("Error al cargar las ventas");
+            }
+
+            const data = await response.json();
+            setSales(data.sales || []);
+            setTotalEarnings(data.total_earnings || 0);
+        } catch (error) {
+            console.error("Error loading sales:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="text-center my-5">
+                <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Cargando ventas...</span>
+                </div>
+                <p className="mt-2">Cargando tus ventas...</p>
+            </div>
+        );
+    }
+
+    return (
+        <>
+            {/* Resumen de ganancias */}
+            <div className="row mb-4">
+                <div className="col-md-6">
+                    <div className="card bg-success text-white">
+                        <div className="card-body">
+                            <div className="d-flex align-items-center">
+                                <i className="fas fa-dollar-sign fa-3x me-3"></i>
+                                <div>
+                                    <h6 className="card-subtitle mb-1">Ganancias Totales</h6>
+                                    <h4 className="card-title mb-0">${totalEarnings.toFixed(2)}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="col-md-6">
+                    <div className="card bg-info text-white">
+                        <div className="card-body">
+                            <div className="d-flex align-items-center">
+                                <i className="fas fa-shopping-cart fa-3x me-3"></i>
+                                <div>
+                                    <h6 className="card-subtitle mb-1">Productos Vendidos</h6>
+                                    <h4 className="card-title mb-0">{sales.length}</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Lista de ventas */}
+            {sales.length === 0 ? (
+                <div className="text-center my-5">
+                    <i className="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
+                    <h4>No tienes ventas todavía</h4>
+                    <p className="text-muted">Tus ventas aparecerán aquí una vez que los compradores adquieran tus productos</p>
+                    <button
+                        className="btn btn-primary mt-2"
+                        onClick={() => window.location.reload()}
+                    >
+                        <i className="fas fa-sync-alt me-2"></i> Actualizar
+                    </button>
+                </div>
+            ) : (
+                <div className="table-responsive">
+                    <table className="table table-hover">
+                        <thead className="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th>Comprador</th>
+                                <th>Fecha</th>
+                                <th>Precio</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {sales.map(sale => (
+                                <tr key={sale.id}>
+                                    <td>
+                                        <div className="d-flex align-items-center">
+                                            <img
+                                                src={sale.product.image || 'https://via.placeholder.com/50'}
+                                                alt={sale.product.title}
+                                                className="img-thumbnail me-2"
+                                                style={{ width: "50px", height: "50px", objectFit: "cover" }}
+                                            />
+                                            <div>
+                                                <div className="fw-bold">{sale.product.title}</div>
+                                                <small className="text-muted">#{sale.product.id}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <div className="fw-bold">{sale.buyer.first_name} {sale.buyer.last_name}</div>
+                                            <small className="text-muted">{sale.buyer.email}</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <div>{new Date(sale.created_at).toLocaleDateString()}</div>
+                                            <small className="text-muted">{new Date(sale.created_at).toLocaleTimeString()}</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="fw-bold text-success">${sale.price.toFixed(2)}</div>
+                                        {sale.discount > 0 && (
+                                            <small className="text-muted">Descuento: {sale.discount}%</small>
+                                        )}
+                                    </td>
+                                    <td>
+                                        <span className={`badge ${sale.status === 'completed' ? 'bg-success' :
+                                            sale.status === 'pending' ? 'bg-warning' :
+                                                sale.status === 'shipped' ? 'bg-info' : 'bg-secondary'
+                                            }`}>
+                                            {sale.status === 'completed' ? 'Completada' :
+                                                sale.status === 'pending' ? 'Pendiente' :
+                                                    sale.status === 'shipped' ? 'Enviada' : sale.status}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div className="btn-group" role="group">
+                                            <button
+                                                className="btn btn-sm btn-outline-primary"
+                                                title="Ver detalles"
+                                            >
+                                                <i className="fas fa-eye"></i>
+                                            </button>
+                                            {sale.status === 'pending' && (
+                                                <button
+                                                    className="btn btn-sm btn-outline-success"
+                                                    title="Marcar como enviado"
+                                                >
+                                                    <i className="fas fa-shipping-fast"></i>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </>
+    );
+};
+
+// Componente para configuración del perfil
+
+const ProfileSettings = () => {
+    const { store, dispatch } = useGlobalReducer();
+    const [formData, setFormData] = useState({
+        first_name: store.auth?.user?.first_name || '',
+        last_name: store.auth?.user?.last_name || '',
+        username: store.auth?.user?.username || '',
+        email: store.auth?.user?.email || '',
+        store_name: '',
+        store_description: '',
+        phone: '',
+        current_password: '',
+        new_password: '',
+        confirm_password: ''
+    });
+
+    const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [success, setSuccess] = useState('');
+
+    useEffect(() => {
+        // Cargar configuración actual del vendedor
+        loadSellerSettings();
+    }, []);
+
+    const loadSellerSettings = async () => {
+        try {
+            const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+            const response = await fetch(`${backendUrl}/api/seller/profile`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${store.auth?.token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setFormData(prev => ({
+                    ...prev,
+                    store_name: data.store_name || '',
+                    store_description: data.store_description || '',
+                    phone: data.phone || ''
+                }));
+            }
+        } catch (error) {
+            console.error("Error loading seller settings:", error);
+        }
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+
+        // Limpiar errores específicos
+        if (errors[name]) {
+            setErrors({ ...errors, [name]: "" });
+        }
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+
+        // Validar campos básicos
+        if (!formData.first_name.trim()) {
+            newErrors.first_name = "El nombre es obligatorio";
+        }
+
+        if (!formData.last_name.trim()) {
+            newErrors.last_name = "Los apellidos son obligatorios";
+        }
+
+        if (!formData.username.trim()) {
+            newErrors.username = "El nombre de usuario es obligatorio";
+        }
+
+        if (!formData.email.trim()) {
+            newErrors.email = "El correo electrónico es obligatorio";
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            newErrors.email = "Formato de correo electrónico inválido";
+        }
+
+        // Validar contraseñas si se proporcionan
+        if (formData.new_password) {
+            if (!formData.current_password) {
+                newErrors.current_password = "La contraseña actual es obligatoria para cambiar la contraseña";
+            }
+
+            if (formData.new_password.length < 6) {
+                newErrors.new_password = "La nueva contraseña debe tener al menos 6 caracteres";
+            }
+
+            if (formData.new_password !== formData.confirm_password) {
+                newErrors.confirm_password = "Las contraseñas no coinciden";
+            }
+        }
+
+        return newErrors;
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        const formErrors = validateForm();
+
+        if (Object.keys(formErrors).length > 0) {
+            setErrors(formErrors);
+            return;
+        }
+
+        setIsSubmitting(true);
+        setSuccess('');
+
+        try {
+            const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+            const response = await fetch(`${backendUrl}/api/seller/profile`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${store.auth?.token}`
+                },
+                body: JSON.stringify({
+                    first_name: formData.first_name,
+                    last_name: formData.last_name,
+                    username: formData.username,
+                    email: formData.email,
+                    store_name: formData.store_name,
+                    store_description: formData.store_description,
+                    phone: formData.phone,
+                    current_password: formData.current_password || undefined,
+                    new_password: formData.new_password || undefined
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Error al actualizar el perfil");
+            }
+
+            // Actualizar el estado global con los nuevos datos del usuario
+            dispatch({
+                type: "auth_success",
+                payload: {
+                    token: store.auth.token,
+                    user: data.user
+                }
+            });
+
+            setSuccess("Perfil actualizado correctamente");
+
+            // Limpiar campos de contraseña
+            setFormData(prev => ({
+                ...prev,
+                current_password: '',
+                new_password: '',
+                confirm_password: ''
+            }));
+
+        } catch (error) {
+            setErrors({
+                general: error.message || "Ocurrió un error al actualizar el perfil"
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit}>
+            {errors.general && (
+                <div className="alert alert-danger">{errors.general}</div>
+            )}
+
+            {success && (
+                <div className="alert alert-success">{success}</div>
+            )}
+
+            {/* Información Personal */}
+            <div className="card mb-4">
+                <div className="card-header">
+                    <h5 className="mb-0">Información Personal</h5>
+                </div>
+                <div className="card-body">
+                    <div className="row">
+                        <div className="col-md-6 mb-3">
+                            <label htmlFor="first_name" className="form-label">Nombre</label>
+                            <input
+                                type="text"
+                                className={`form-control ${errors.first_name ? "is-invalid" : ""}`}
+                                id="first_name"
+                                name="first_name"
+                                value={formData.first_name}
+                                onChange={handleChange}
+                                required
+                            />
+                            {errors.first_name && <div className="invalid-feedback">{errors.first_name}</div>}
+                        </div>
+
+                        <div className="col-md-6 mb-3">
+                            <label htmlFor="last_name" className="form-label">Apellidos</label>
+                            <input
+                                type="text"
+                                className={`form-control ${errors.last_name ? "is-invalid" : ""}`}
+                                id="last_name"
+                                name="last_name"
+                                value={formData.last_name}
+                                onChange={handleChange}
+                                required
+                            />
+                            {errors.last_name && <div className="invalid-feedback">{errors.last_name}</div>}
+                        </div>
+                    </div>
+
+                    <div className="row">
+                        <div className="col-md-6 mb-3">
+                            <label htmlFor="username" className="form-label">Nombre de usuario</label>
+                            <input
+                                type="text"
+                                className={`form-control ${errors.username ? "is-invalid" : ""}`}
+                                id="username"
+                                name="username"
+                                value={formData.username}
+                                onChange={handleChange}
+                                required
+                            />
+                            {errors.username && <div className="invalid-feedback">{errors.username}</div>}
+                        </div>
+
+                        <div className="col-md-6 mb-3">
+                            <label htmlFor="email" className="form-label">Correo electrónico</label>
+                            <input
+                                type="email"
+                                className={`form-control ${errors.email ? "is-invalid" : ""}`}
+                                id="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                required
+                            />
+                            {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                        </div>
+                    </div>
+
+                    <div className="mb-3">
+                        <label htmlFor="phone" className="form-label">Teléfono</label>
+                        <input
+                            type="tel"
+                            className="form-control"
+                            id="phone"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleChange}
+                            placeholder="Ingresa tu número de teléfono"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Información de la Tienda */}
+            <div className="card mb-4">
+                <div className="card-header">
+                    <h5 className="mb-0">Información de la Tienda</h5>
+                </div>
+                <div className="card-body">
+                    <div className="mb-3">
+                        <label htmlFor="store_name" className="form-label">Nombre de la Tienda</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            id="store_name"
+                            name="store_name"
+                            value={formData.store_name}
+                            onChange={handleChange}
+                            placeholder="Ingresa el nombre de tu tienda"
+                        />
+                    </div>
+
+                    <div className="mb-3">
+                        <label htmlFor="store_description" className="form-label">Descripción de la Tienda</label>
+                        <textarea
+                            className="form-control"
+                            id="store_description"
+                            name="store_description"
+                            rows="3"
+                            value={formData.store_description}
+                            onChange={handleChange}
+                            placeholder="Describe tu tienda en pocas palabras"
+                        ></textarea>
+                    </div>
+                </div>
+            </div>
+
+            {/* Cambiar Contraseña */}
+            <div className="card mb-4">
+                <div className="card-header">
+                    <h5 className="mb-0">Cambiar Contraseña</h5>
+                </div>
+                <div className="card-body">
+                    <div className="mb-3">
+                        <label htmlFor="current_password" className="form-label">Contraseña Actual</label>
+                        <input
+                            type="password"
+                            className={`form-control ${errors.current_password ? "is-invalid" : ""}`}
+                            id="current_password"
+                            name="current_password"
+                            value={formData.current_password}
+                            onChange={handleChange}
+                            placeholder="Deja en blanco si no quieres cambiar la contraseña"
+                        />
+                        {errors.current_password && <div className="invalid-feedback">{errors.current_password}</div>}
+                    </div>
+
+                    <div className="row">
+                        <div className="col-md-6 mb-3">
+                            <label htmlFor="new_password" className="form-label">Nueva Contraseña</label>
+                            <input
+                                type="password"
+                                className={`form-control ${errors.new_password ? "is-invalid" : ""}`}
+                                id="new_password"
+                                name="new_password"
+                                value={formData.new_password}
+                                onChange={handleChange}
+                                placeholder="Mínimo 6 caracteres"
+                            />
+                            {errors.new_password && <div className="invalid-feedback">{errors.new_password}</div>}
+                        </div>
+
+                        <div className="col-md-6 mb-3">
+                            <label htmlFor="confirm_password" className="form-label">Confirmar Nueva Contraseña</label>
+                            <input
+                                type="password"
+                                className={`form-control ${errors.confirm_password ? "is-invalid" : ""}`}
+                                id="confirm_password"
+                                name="confirm_password"
+                                value={formData.confirm_password}
+                                onChange={handleChange}
+                                placeholder="Repite la nueva contraseña"
+                            />
+                            {errors.confirm_password && <div className="invalid-feedback">{errors.confirm_password}</div>}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="d-flex justify-content-end">
+                <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={isSubmitting}
+                >
+                    {isSubmitting ? (
+                        <>
+                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Guardando...
+                        </>
+                    ) : (
+                        "Guardar Cambios"
+                    )}
+                </button>
+            </div>
+        </form>
+    );
+};
+
 
 // Componente para el formulario de añadir producto
 const AddProductForm = () => {
