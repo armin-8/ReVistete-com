@@ -45,7 +45,7 @@ const Home = () => {
 									<i className="fas fa-shopping-bag fa-3x text-success mb-3"></i>
 									<h3>¿Buscas comprar?</h3>
 									<p>Descubre prendas únicas a precios increíbles con garantía de calidad</p>
-									<Link to="/buyer-signup" className="btn btn-success btn-lg">
+									<Link to="/buyer-signup" className="btn btn-danger btn-lg">
 										Registrarse para comprar
 									</Link>
 								</div>

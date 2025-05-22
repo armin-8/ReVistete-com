@@ -13,6 +13,7 @@ import SellerSignup from "./pages/SellerSignup";
 import SellerDashboard from "./pages/SellerDashboard";
 import Login from "./pages/Login";
 import BuyerSignup from "./pages/BuyerSignup";
+import BuyerDashboard from "./pages/BuyerDashboard";
 
 
 export const router = createBrowserRouter(
@@ -34,6 +35,8 @@ export const router = createBrowserRouter(
       <Route path="/seller-dashboard" element={<SellerDashboard />} />
       <Route path="/login" element={<Login />} />
       <Route path="/buyer-signup" element={<BuyerSignup />} />
+      <Route path="/registro-comprador" element={<BuyerSignup />} />
+      <Route path="/comprador/panel" element={<BuyerDashboard />} />
     </Route>
   )
 );
