@@ -101,7 +101,7 @@ export const SellerDashboard = () => {
                                         className={`nav-link text-start w-100 ${activeTab === "settings" ? "active" : ""}`}
                                         onClick={() => setActiveTab("settings")}
                                     >
-                                        <i className="fas fa-cog me-2"></i> Configuración
+                                        <i className="fas fa-cog me-2"></i> Perfil
                                     </button>
                                 </li>
                             </ul>
@@ -166,7 +166,7 @@ export const SellerDashboard = () => {
                                                 <i className="fas fa-plus-circle me-2"></i> Añadir Producto
                                             </button>
                                             <button className="btn btn-outline-secondary">
-                                                <i className="fas fa-cog me-2"></i> Configurar Tienda
+                                                <i className="fas fa-cog me-2"></i> Configurar de Perfil
                                             </button>
                                         </div>
                                     </div>
@@ -225,7 +225,7 @@ export const SellerDashboard = () => {
                                                     <tr key={product.id}>
                                                         <td>
                                                             <img
-                                                                src={product.images[0] || 'https://via.placeholder.com/50'}
+                                                                src={product.images?.[0]?.url || 'https://via.placeholder.com/50'}
                                                                 alt={product.title}
                                                                 className="img-thumbnail"
                                                                 style={{ width: "50px", height: "50px", objectFit: "cover" }}
@@ -955,13 +955,41 @@ const AddProductForm = () => {
         setIsSubmitting(true);
 
         try {
-            // Aquí normalmente enviarías las imágenes a un servidor como Cloudinary
-            // y luego enviarías los datos del producto con las URLs de las imágenes
+            const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-            // Por ahora, simulamos un éxito después de 2 segundos
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Crear objeto con los datos del producto
+            const productData = {
+                title: formData.title,
+                description: formData.description,
+                category: formData.category,
+                subcategory: formData.subcategory,
+                size: formData.size,
+                brand: formData.brand,
+                condition: formData.condition,
+                material: formData.material,
+                color: formData.color,
+                price: formData.price,
+                discount: formData.discount || 0,
+                images: uploadedImages.map(img => img.preview) // Por ahora usamos las previews
+            };
 
-            // Éxito simulado
+            // Enviar petición POST al backend
+            const response = await fetch(`${backendUrl}/api/products`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${store.auth?.token}`
+                },
+                body: JSON.stringify(productData)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Error al crear el producto");
+            }
+
+            // Éxito real
             alert("Producto añadido exitosamente");
 
             // Limpiar formulario

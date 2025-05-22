@@ -133,7 +133,7 @@ class Product(db.Model):
 
 class ProductImage(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
-    url: Mapped[str] = mapped_column(String(500), nullable=False)
+    url: Mapped[str] = mapped_column(Text, nullable=False)
     product_id: Mapped[int] = mapped_column(
         ForeignKey("product.id"), nullable=False)
     position: Mapped[int] = mapped_column(nullable=False, default=0)
@@ -148,7 +148,7 @@ class ProductImage(db.Model):
             "position": self.position
         }
 
-# En src/api/models.py - Añadir este nuevo modelo
+# Modelo Sale
 
 
 class Sale(db.Model):
