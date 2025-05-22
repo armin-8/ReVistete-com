@@ -59,10 +59,10 @@ class User(db.Model):
     products = relationship(
         "Product", back_populates="seller", cascade="all, delete-orphan")
     # Nueva relación para ventas
-    sales = relationship("Sale", back_populates="seller",
-                         cascade="all, delete-orphan")
-    purchases = relationship(
-        "Sale", back_populates="buyer", cascade="all, delete-orphan")
+    sales = relationship("Sale", foreign_keys="Sale.seller_id",
+                         back_populates="seller", cascade="all, delete-orphan")
+    purchases = relationship("Sale", foreign_keys="Sale.buyer_id",
+                             back_populates="buyer", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         # Hashear la contraseña al crear un nuevo usuario
