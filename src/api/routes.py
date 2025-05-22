@@ -117,7 +117,12 @@ def get_seller_products():
         return jsonify({"error": "Access denied, user is not a seller"}), 403
 
     # Obtener productos del vendedor
+    print(f"DEBUG: User ID: {user.id}")
     products = Product.query.filter_by(seller_id=user.id).all()
+    print(f"DEBUG: Found {len(products)} products")
+    for product in products:
+        print(
+            f"DEBUG: Product: {product.title}, ID: {product.id}, Seller: {product.seller_id}")
 
     return jsonify({
         "products": [product.serialize() for product in products]
@@ -170,8 +175,11 @@ def create_product():
     )
 
     try:
+        print(f"DEBUG CREATE: About to save product for user {user.id}")
+        print(f"DEBUG CREATE: Product title: {new_product.title}")
         db.session.add(new_product)
         db.session.commit()
+        print(f"DEBUG CREATE: Product saved with ID {new_product.id}")
 
         # Procesar imágenes si las hay
         image_urls = data.get("images", [])
