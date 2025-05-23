@@ -347,8 +347,8 @@ def get_seller_profile():
         "username": user.username,
         "email": user.email,
         "phone": user.phone,
-        "store_name": user.store_name,
-        "store_description": user.store_description
+        # "store_name": user.store_name,
+        # "store_description": user.store_description
     }), 200
 
 # Endpoint para actualizar el perfil del vendedor
@@ -411,9 +411,9 @@ def update_seller_profile():
         user.username = data["username"]
         user.email = data["email"]
         user.phone = data.get("phone", user.phone)
-        user.store_name = data.get("store_name", user.store_name)
-        user.store_description = data.get(
-            "store_description", user.store_description)
+        # user.store_name = data.get("store_name", user.store_name)
+        # user.store_description = data.get(
+        #     "store_description", user.store_description)
 
         # Actualizar contraseña si se proporcionó
         if data.get("new_password"):

@@ -484,6 +484,14 @@ const ProfileSettings = () => {
         store_name: '',
         store_description: '',
         phone: '',
+        //nuevos campos para contacto del vendedor
+        whatsapp: '',
+        business_email: '',
+        social_media: '',
+        attention_hours: '',
+        payment_methods: [],
+        delivery_zones: '',
+        return_policy: '',
         current_password: '',
         new_password: '',
         confirm_password: ''
@@ -513,9 +521,17 @@ const ProfileSettings = () => {
                 const data = await response.json();
                 setFormData(prev => ({
                     ...prev,
-                    store_name: data.store_name || '',
-                    store_description: data.store_description || '',
-                    phone: data.phone || ''
+                    // store_name: data.store_name || '',
+                    // store_description: data.store_description || '',
+                    // phone: data.phone || ''
+                    phone: data.phone || '',
+                    whatsapp: data.whatsapp || '',
+                    business_email: data.business_email || '',
+                    social_media: data.social_media || '',
+                    attention_hours: data.attention_hours || '',
+                    payment_methods: data.payment_methods || [],
+                    delivery_zones: data.delivery_zones || '',
+                    return_policy: data.return_policy || ''
                 }));
             }
         } catch (error) {
@@ -600,9 +616,16 @@ const ProfileSettings = () => {
                     last_name: formData.last_name,
                     username: formData.username,
                     email: formData.email,
-                    store_name: formData.store_name,
-                    store_description: formData.store_description,
+                    // store_name: formData.store_name,
+                    // store_description: formData.store_description,
                     phone: formData.phone,
+                    whatsapp: formData.whatsapp,
+                    business_email: formData.business_email,
+                    social_media: formData.social_media,
+                    attention_hours: formData.attention_hours,
+                    payment_methods: formData.payment_methods,
+                    delivery_zones: formData.delivery_zones,
+                    return_policy: formData.return_policy,
                     current_password: formData.current_password || undefined,
                     new_password: formData.new_password || undefined
                 })
@@ -734,9 +757,9 @@ const ProfileSettings = () => {
             </div>
 
             {/* Información de la Tienda */}
-            <div className="card mb-4">
+            {/* <div className="card mb-4">
                 <div className="card-header">
-                    <h5 className="mb-0">Información de la Tienda</h5>
+                    <h5 className="mb-0">Información del vendedor</h5>
                 </div>
                 <div className="card-body">
                     <div className="mb-3">
@@ -753,7 +776,7 @@ const ProfileSettings = () => {
                     </div>
 
                     <div className="mb-3">
-                        <label htmlFor="store_description" className="form-label">Descripción de la Tienda</label>
+                        <label htmlFor="store_description" className="form-label">Describe lo que vendes</label>
                         <textarea
                             className="form-control"
                             id="store_description"
@@ -761,7 +784,120 @@ const ProfileSettings = () => {
                             rows="3"
                             value={formData.store_description}
                             onChange={handleChange}
-                            placeholder="Describe tu tienda en pocas palabras"
+                            placeholder="Describe lo que vendes en pocas palabras"
+                        ></textarea>
+                    </div>
+                </div>
+            </div> */}
+
+            {/* Información de Contacto y Ventas */}
+            <div className="card mb-4">
+                <div className="card-header">
+                    <h5 className="mb-0">Información de Contacto y Ventas</h5>
+                </div>
+                <div className="card-body">
+                    <div className="row">
+                        <div className="col-md-6 mb-3">
+                            <label htmlFor="whatsapp" className="form-label">WhatsApp para ventas</label>
+                            <input
+                                type="tel"
+                                className="form-control"
+                                id="whatsapp"
+                                name="whatsapp"
+                                value={formData.whatsapp}
+                                onChange={handleChange}
+                                placeholder="Ej: +52 1234567890"
+                            />
+                            <div className="form-text">Número donde los clientes pueden contactarte por WhatsApp</div>
+                        </div>
+
+                        <div className="col-md-6 mb-3">
+                            <label htmlFor="business_email" className="form-label">Correo electrónico comercial</label>
+                            <input
+                                type="email"
+                                className="form-control"
+                                id="business_email"
+                                name="business_email"
+                                value={formData.business_email}
+                                onChange={handleChange}
+                                placeholder="ventas@ejemplo.com"
+                            />
+                            <div className="form-text">Correo para contacto comercial (opcional)</div>
+                        </div>
+                    </div>
+
+                    <div className="row">
+                        <div className="col-md-6 mb-3">
+                            <label htmlFor="social_media" className="form-label">Enlace a red social principal</label>
+                            <input
+                                type="url"
+                                className="form-control"
+                                id="social_media"
+                                name="social_media"
+                                value={formData.social_media}
+                                onChange={handleChange}
+                                placeholder="https://instagram.com/tutienda"
+                            />
+                            <div className="form-text">Instagram, Facebook u otra red donde promociones tus productos</div>
+                        </div>
+
+                        <div className="col-md-6 mb-3">
+                            <label htmlFor="attention_hours" className="form-label">Horarios de atención</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                id="attention_hours"
+                                name="attention_hours"
+                                value={formData.attention_hours}
+                                onChange={handleChange}
+                                placeholder="Ej: Lun-Vie 9am-6pm, Sáb 10am-2pm"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mb-3">
+                        <label htmlFor="payment_methods" className="form-label">Métodos de pago aceptados</label>
+                        <select
+                            className="form-select"
+                            id="payment_methods"
+                            name="payment_methods"
+                            value={formData.payment_methods}
+                            onChange={handleChange}
+                            multiple
+                        >
+                            <option value="efectivo">Efectivo</option>
+                            <option value="transferencia">Transferencia bancaria</option>
+                            <option value="mercado_pago">Mercado Pago</option>
+                            <option value="paypal">PayPal</option>
+                            <option value="tarjeta">Tarjeta (en persona)</option>
+                            <option value="deposito">Depósito bancario</option>
+                        </select>
+                        <div className="form-text">Mantén presionada la tecla Ctrl/Cmd para seleccionar múltiples opciones</div>
+                    </div>
+
+                    <div className="mb-3">
+                        <label htmlFor="delivery_zones" className="form-label">Zonas de entrega o cobertura</label>
+                        <textarea
+                            className="form-control"
+                            id="delivery_zones"
+                            name="delivery_zones"
+                            rows="2"
+                            value={formData.delivery_zones}
+                            onChange={handleChange}
+                            placeholder="Ej: Todo Guadalajara y Zapopan. Envíos a todo el país por paquetería."
+                        ></textarea>
+                    </div>
+
+                    <div className="mb-3">
+                        <label htmlFor="return_policy" className="form-label">Política de devoluciones</label>
+                        <textarea
+                            className="form-control"
+                            id="return_policy"
+                            name="return_policy"
+                            rows="2"
+                            value={formData.return_policy}
+                            onChange={handleChange}
+                            placeholder="Ej: Aceptamos devoluciones dentro de los primeros 7 días por defectos."
                         ></textarea>
                     </div>
                 </div>
