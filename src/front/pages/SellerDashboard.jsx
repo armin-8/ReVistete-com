@@ -50,6 +50,50 @@ export const SellerDashboard = () => {
         }
     };
 
+    // Función para eliminar un producto
+    const handleDeleteProduct = async (productId) => {
+        // Confirmación antes de eliminar
+        if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+            return;
+        }
+
+        try {
+            const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+            const response = await fetch(`${backendUrl}/api/products/${productId}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${store.auth?.token}`
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Error al eliminar el producto");
+            }
+
+            // Actualizar la lista de productos (eliminar el producto del estado)
+            setProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
+
+            // Mostrar mensaje de éxito
+            setAlertMessage("Producto eliminado correctamente");
+            setAlertType("success");
+
+        } catch (error) {
+            console.error("Error eliminando producto:", error);
+            setAlertMessage(error.message || "Ocurrió un error al eliminar el producto");
+            setAlertType("danger");
+        }
+    };
+
+
+    const handleEditProduct = (product) => {
+        setEditingProduct(product);
+        setActiveTab("add-product");
+    };
+
+
+
     return (
         <div className="container my-5 pt-5">
             <div className="row">
@@ -323,48 +367,6 @@ export const SellerDashboard = () => {
 };
 
 
-
-// Función para eliminar un producto
-const handleDeleteProduct = async (productId) => {
-    // Confirmación antes de eliminar
-    if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) {
-        return;
-    }
-
-    try {
-        const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
-        const response = await fetch(`${backendUrl}/api/products/${productId}`, {
-            method: "DELETE",
-            headers: {
-                "Authorization": `Bearer ${store.auth?.token}`
-            }
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Error al eliminar el producto");
-        }
-
-        // Actualizar la lista de productos (eliminar el producto del estado)
-        setProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
-
-        // Mostrar mensaje de éxito
-        setAlertMessage("Producto eliminado correctamente");
-        setAlertType("success");
-
-    } catch (error) {
-        console.error("Error eliminando producto:", error);
-        setAlertMessage(error.message || "Ocurrió un error al eliminar el producto");
-        setAlertType("danger");
-    }
-};
-
-
-const handleEditProduct = (product) => {
-    setEditingProduct(product);
-    setActiveTab("add-product");
-};
 
 // Componente para mostrar las ventas
 
@@ -1212,9 +1214,18 @@ const AddProductForm = ({ editingProduct, onProductSaved }) => {
                 images: uploadedImages.map(img => img.preview) // Por ahora usamos las previews
             };
 
-            // Enviar petición POST al backend
-            const response = await fetch(`${backendUrl}/api/products`, {
-                method: "POST",
+
+
+            // Determinar si es una edición o una creación
+            const url = editingProduct
+                ? `${backendUrl}/api/products/${editingProduct.id}`
+                : `${backendUrl}/api/products`;
+
+            const method = editingProduct ? "PUT" : "POST";
+
+            // Enviar petición al backend
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${store.auth?.token}`
@@ -1225,11 +1236,11 @@ const AddProductForm = ({ editingProduct, onProductSaved }) => {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || "Error al crear el producto");
+                throw new Error(data.error || `Error al ${editingProduct ? "actualizar" : "crear"} el producto`);
             }
 
-            // Éxito real
-            alert("Producto añadido exitosamente");
+            // Éxito
+            alert(`Producto ${editingProduct ? "actualizado" : "añadido"} exitosamente`);
 
             // Limpiar formulario
             setFormData({
@@ -1256,7 +1267,7 @@ const AddProductForm = ({ editingProduct, onProductSaved }) => {
 
         } catch (error) {
             setErrors({
-                general: error.message || "Ocurrió un error al añadir el producto"
+                general: error.message || `Ocurrió un error al ${editingProduct ? "actualizar" : "añadir"} el producto`
             });
         } finally {
             setIsSubmitting(false);
@@ -1550,7 +1561,13 @@ const AddProductForm = ({ editingProduct, onProductSaved }) => {
             </div>
 
             <div className="d-flex justify-content-between">
-                <button type="button" className="btn btn-outline-secondary">Guardar borrador</button>
+                {/* El botón de guardar borrador se oculta en modo edición */}
+                {!editingProduct && (
+                    <button type="button" className="btn btn-outline-secondary">
+                        Guardar borrador
+                    </button>
+                )}
+
                 <button
                     type="submit"
                     className="btn btn-primary"
@@ -1559,10 +1576,10 @@ const AddProductForm = ({ editingProduct, onProductSaved }) => {
                     {isSubmitting ? (
                         <>
                             <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                            Publicando...
+                            {editingProduct ? "Guardando cambios..." : "Publicando..."}
                         </>
                     ) : (
-                        "Publicar producto"
+                        editingProduct ? "Guardar cambios" : "Publicar producto"
                     )}
                 </button>
             </div>
