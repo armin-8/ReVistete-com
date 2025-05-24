@@ -189,6 +189,17 @@ export const SellerDashboard = () => {
                                     </button>
                                 </div>
 
+                                {alertMessage && (
+                                    <div className={`alert alert-${alertType} alert-dismissible fade show`} role="alert">
+                                        {alertMessage}
+                                        <button
+                                            type="button"
+                                            className="btn-close"
+                                            onClick={() => setAlertMessage("")}
+                                        ></button>
+                                    </div>
+                                )}
+
                                 {isLoading ? (
                                     <div className="text-center my-5">
                                         <div className="spinner-border text-primary" role="status">
@@ -237,10 +248,16 @@ export const SellerDashboard = () => {
                                                             <span className="badge bg-success">Activo</span>
                                                         </td>
                                                         <td>
-                                                            <button className="btn btn-sm btn-outline-primary me-1">
+                                                            <button
+                                                                className="btn btn-sm btn-outline-primary me-1"
+                                                                onClick={() => handleEditProduct(product)}
+                                                            >
                                                                 <i className="fas fa-edit"></i>
                                                             </button>
-                                                            <button className="btn btn-sm btn-outline-danger">
+                                                            <button
+                                                                className="btn btn-sm btn-outline-danger"
+                                                                onClick={() => handleDeleteProduct(product.id)}
+                                                            >
                                                                 <i className="fas fa-trash"></i>
                                                             </button>
                                                         </td>
@@ -258,9 +275,18 @@ export const SellerDashboard = () => {
                     {activeTab === "add-product" && (
                         <div className="card shadow-sm">
                             <div className="card-body">
-                                <h2 className="card-title mb-4">Añadir Nuevo Producto</h2>
+                                <h2 className="card-title mb-4">
+                                    {editingProduct ? "Editar Producto" : "Añadir Nuevo Producto"}
+                                </h2>
 
-                                <AddProductForm />
+                                <AddProductForm
+                                    editingProduct={editingProduct}
+                                    onProductSaved={() => {
+                                        loadSellerProducts();
+                                        setEditingProduct(null);
+                                        setActiveTab("products");
+                                    }}
+                                />
                             </div>
                         </div>
                     )}
@@ -290,6 +316,53 @@ export const SellerDashboard = () => {
             </div>
         </div>
     );
+};
+
+const [alertMessage, setAlertMessage] = useState("");
+const [alertType, setAlertType] = useState("");
+
+// Función para eliminar un producto
+const handleDeleteProduct = async (productId) => {
+    // Confirmación antes de eliminar
+    if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+        return;
+    }
+
+    try {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+        const response = await fetch(`${backendUrl}/api/products/${productId}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${store.auth?.token}`
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Error al eliminar el producto");
+        }
+
+        // Actualizar la lista de productos (eliminar el producto del estado)
+        setProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
+
+        // Mostrar mensaje de éxito
+        setAlertMessage("Producto eliminado correctamente");
+        setAlertType("success");
+
+    } catch (error) {
+        console.error("Error eliminando producto:", error);
+        setAlertMessage(error.message || "Ocurrió un error al eliminar el producto");
+        setAlertType("danger");
+    }
+};
+
+
+const [editingProduct, setEditingProduct] = useState(null);
+
+const handleEditProduct = (product) => {
+    setEditingProduct(product);
+    setActiveTab("add-product");
 };
 
 // Componente para mostrar las ventas
@@ -340,6 +413,8 @@ const SalesSection = () => {
             </div>
         );
     }
+
+
 
     return (
         <>
@@ -977,7 +1052,7 @@ const ProfileSettings = () => {
 
 
 // Componente para el formulario de añadir producto
-const AddProductForm = () => {
+const AddProductForm = ({ editingProduct, onProductSaved }) => {
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -997,6 +1072,33 @@ const AddProductForm = () => {
     const [uploadedImages, setUploadedImages] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { store } = useGlobalReducer();
+
+    useEffect(() => {
+        if (editingProduct) {
+            setFormData({
+                title: editingProduct.title || "",
+                description: editingProduct.description || "",
+                category: editingProduct.category || "",
+                subcategory: editingProduct.subcategory || "",
+                size: editingProduct.size || "",
+                brand: editingProduct.brand || "",
+                condition: editingProduct.condition || "two_wears",
+                material: editingProduct.material || "",
+                color: editingProduct.color || "",
+                price: editingProduct.price?.toString() || "",
+                discount: editingProduct.discount?.toString() || "",
+            });
+
+            // Cargar imágenes existentes
+            if (editingProduct.images && editingProduct.images.length > 0) {
+                const images = editingProduct.images.map(image => ({
+                    preview: image.url,
+                    isExisting: true
+                }));
+                setUploadedImages(images);
+            }
+        }
+    }, [editingProduct]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -1145,6 +1247,11 @@ const AddProductForm = () => {
             });
 
             setUploadedImages([]);
+
+            // Notificar al componente padre
+            if (onProductSaved) {
+                onProductSaved();
+            }
 
         } catch (error) {
             setErrors({
