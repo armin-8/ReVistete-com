@@ -11,6 +11,10 @@ export const SellerDashboard = () => {
     const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    const [alertMessage, setAlertMessage] = useState("");
+    const [alertType, setAlertType] = useState("");
+    const [editingProduct, setEditingProduct] = useState(null);
+
     // Verificar autenticación
     useEffect(() => {
         if (!store.auth?.isAuthenticated || store.auth?.user?.role !== "seller") {
@@ -318,8 +322,7 @@ export const SellerDashboard = () => {
     );
 };
 
-const [alertMessage, setAlertMessage] = useState("");
-const [alertType, setAlertType] = useState("");
+
 
 // Función para eliminar un producto
 const handleDeleteProduct = async (productId) => {
@@ -357,8 +360,6 @@ const handleDeleteProduct = async (productId) => {
     }
 };
 
-
-const [editingProduct, setEditingProduct] = useState(null);
 
 const handleEditProduct = (product) => {
     setEditingProduct(product);
