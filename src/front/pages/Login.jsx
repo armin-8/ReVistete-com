@@ -140,7 +140,7 @@ const Login = () => {
                                 <div className="d-grid">
                                     <button
                                         type="submit"
-                                        className="btn btn-primary btn-lg"
+                                        className="btn btn-dark btn-lg"
                                         disabled={isSubmitting}
                                     >
                                         {isSubmitting ? (

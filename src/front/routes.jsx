@@ -13,8 +13,8 @@ import SellerSignup from "./pages/SellerSignup";
 import SellerDashboard from "./pages/SellerDashboard";
 import Login from "./pages/Login";
 import BuyerSignup from "./pages/BuyerSignup";
-import ForgotPassword from "./components/ForgotPassword";
-import ResetPassword from "./components/ResetPassword";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 
 export const router = createBrowserRouter(
