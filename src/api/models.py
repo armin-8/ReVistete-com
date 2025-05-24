@@ -124,17 +124,14 @@ class Product(db.Model):
 class ProductImage(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     url: Mapped[str] = mapped_column(String(500), nullable=False)
-    product_id: Mapped[int] = mapped_column(
-        ForeignKey("product.id"), nullable=False)
-    position: Mapped[int] = mapped_column(nullable=False, default=0)
+    product_id: Mapped[int] = mapped_column(ForeignKey("product.id"), nullable=False)
 
-    # Relaciones
     product = relationship("Product", back_populates="images")
 
     def serialize(self):
         return {
             "id": self.id,
-            "url": self.url,
-            "position": self.position
+            "url": self.url
         }
+
 

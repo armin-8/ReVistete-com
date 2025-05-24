@@ -12,9 +12,6 @@ const BuyerSignup = () => {
         username: "",
         password: "",
         confirm_password: "",
-        address: "",
-        city: "",
-        zip_code: ""
     });
 
     const [errors, setErrors] = useState({});
@@ -56,9 +53,6 @@ const BuyerSignup = () => {
             newErrors.confirm_password = "Las contraseñas no coinciden";
         }
 
-        if (!formData.address.trim()) newErrors.address = "La dirección es obligatoria";
-        if (!formData.city.trim()) newErrors.city = "La ciudad es obligatoria";
-
         return newErrors;
     };
 
@@ -81,9 +75,6 @@ const BuyerSignup = () => {
                 last_name: formData.last_name,
                 username: formData.username,
                 password: formData.password,
-                address: formData.address,
-                city: formData.city,
-                zip_code: formData.zip_code,
                 role: "buyer"
             };
 
@@ -113,6 +104,7 @@ const BuyerSignup = () => {
 
             navigate("/comprador/panel");
         } catch (error) {
+            console.error("Error en registro:", error);
             setErrors({ general: error.message });
         } finally {
             setIsSubmitting(false);
@@ -182,6 +174,7 @@ const BuyerSignup = () => {
                         </div>
                     </div>
 
+
                     <div className="card mt-4 shadow-sm">
                         <div className="card-body">
                             <h5 className="card-title">Beneficios de comprar en ReVistete</h5>
@@ -194,9 +187,9 @@ const BuyerSignup = () => {
                         </div>
                     </div>
 
-                </div>
-            </div>
-        </div>
+                </div >
+            </div >
+        </div >
     );
 };
 

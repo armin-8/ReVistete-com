@@ -31,9 +31,7 @@ from flask import Blueprint, jsonify
 import datetime
 
 api = Blueprint('api', __name__)
-
-# Allow CORS requests to this API
-CORS(api)
+CORS(api, supports_credentials=True, origins="*")  # Para pruebas
 
 
 @api.route('/hello', methods=['POST', 'GET'])
@@ -233,11 +231,14 @@ def register_buyer():
     data = request.get_json()
 
     # Validar campos requeridos
-    required_fields = ["email", "password", "first_name",
-                       "last_name", "username", "address", "city"]
+    required_fields = ["email", "first_name", "last_name", "username", "password", "role"]
     for field in required_fields:
         if field not in data or not data[field]:
             return jsonify({"error": f"Missing required field: {field}"}), 400
+
+    # Validar que el role sea exactamente "buyer"
+    if data["role"] != "buyer":
+        return jsonify({"error": "Invalid role, must be 'buyer'"}), 400
 
     # Verificar si el email ya existe
     if User.query.filter_by(email=data["email"]).first():
@@ -247,7 +248,7 @@ def register_buyer():
     if User.query.filter_by(username=data["username"]).first():
         return jsonify({"error": "Username already exists"}), 400
 
-    # Crear nuevo usuario con rol de comprador
+    # Crear nuevo usuario comprador
     new_user = User(
         email=data["email"],
         password=data["password"],
@@ -257,30 +258,27 @@ def register_buyer():
         role="buyer",
         is_active=True
     )
-    # Crear o actualizar información de dirección
-    # Esto requiere un modelo adicional o campos en el modelo usuario
-    # Para simplificar, vamos a almacenar estos datos en una propiedad
-    new_user.address = data["address"]
-    new_user.city = data["city"]
-    new_user.zip_code = data.get("zip_code", "")
 
     try:
         db.session.add(new_user)
         db.session.commit()
 
-        # Crear token de acceso
+        # Crear token JWT
         access_token = create_access_token(
             identity=str(new_user.id),
             expires_delta=datetime.timedelta(hours=24)
         )
+
         return jsonify({
             "message": "Buyer registered successfully",
             "token": access_token,
             "user": new_user.serialize()
         }), 201
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
 
 
 @api.route('/categories', methods=['GET'])
@@ -294,3 +292,37 @@ def get_categories():
         {"id": 6, "name": "Camisas", "image": "/images/camisas.jpg"},
     ]
     return jsonify(categories), 200
+
+
+@api.route("/user/profile", methods=["PUT"])
+@jwt_required()
+def update_profile():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    data = request.json
+
+    user.nombre = data.get("nombre")
+    user.apellidos = data.get("apellidos")
+    user.username = data.get("username")
+    user.email = data.get("email")
+
+    db.session.commit()
+    return jsonify({"msg": "Perfil actualizado"}), 200
+
+
+@api.route("/user/change-password", methods=["POST"])
+@jwt_required()
+def change_password():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    data = request.json
+
+    if not user.check_password(data.get("current_password")):
+        return jsonify({"msg": "Contraseña actual incorrecta"}), 401
+
+    if data.get("new_password") != data.get("confirm_password"):
+        return jsonify({"msg": "Las contraseñas no coinciden"}), 400
+
+    user.set_password(data.get("new_password"))
+    db.session.commit()
+    return jsonify({"msg": "Contraseña actualizada"}), 200
