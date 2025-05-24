@@ -30,6 +30,10 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from werkzeug.security import generate_password_hash
 import datetime
 
+import secrets
+
+password_reset_tokens = {}
+
 api = Blueprint('api', __name__)
 
 # Allow CORS requests to this API
@@ -431,214 +435,300 @@ def update_seller_profile():
         return jsonify({"error": str(e)}), 500
 
 
-@api.route('/products/<int:product_id>', methods=['DELETE'])
-@jwt_required()
-def delete_product(product_id):
-    # Obtener ID del usuario del token
-    user_id = get_jwt_identity()
-
-    # Verificar que el usuario existe y es vendedor
-    user = User.query.get(int(user_id))
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    if user.role != "seller":
-        return jsonify({"error": "Access denied, user is not a seller"}), 403
-
-    # Buscar el producto
-    product = Product.query.get(product_id)
-    if not product:
-        return jsonify({"error": "Product not found"}), 404
-
-    # Verificar que el producto pertenece al vendedor
-    if product.seller_id != user.id:
-        return jsonify({"error": "Access denied, this product belongs to another seller"}), 403
-
-    try:
-        db.session.delete(product)
-        db.session.commit()
-        return jsonify({"message": "Product deleted successfully"}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
-
-
-@api.route('/products/<int:product_id>', methods=['PUT'])
-@jwt_required()
-def update_product(product_id):
-    # Obtener ID del usuario del token
-    user_id = get_jwt_identity()
-
-    # Verificar que el usuario existe y es vendedor
-    user = User.query.get(int(user_id))
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    if user.role != "seller":
-        return jsonify({"error": "Access denied, user is not a seller"}), 403
-
-    # Buscar el producto
-    product = Product.query.get(product_id)
-    if not product:
-        return jsonify({"error": "Product not found"}), 404
-
-    # Verificar que el producto pertenece al vendedor
-    if product.seller_id != user.id:
-        return jsonify({"error": "Access denied, this product belongs to another seller"}), 403
-
-    # Validar datos
+@api.route('/request-password-reset', methods=['POST'])
+def request_password_reset():
     if not request.is_json:
         return jsonify({"error": "Missing JSON in request"}), 400
 
     data = request.get_json()
+    email = data.get('email')
 
-    try:
-        # Actualizar campos del producto
-        if "title" in data:
-            product.title = data["title"]
-        if "description" in data:
-            product.description = data["description"]
-        if "category" in data:
-            product.category = data["category"]
-        if "subcategory" in data:
-            product.subcategory = data["subcategory"]
-        if "size" in data:
-            product.size = data["size"]
-        if "brand" in data:
-            product.brand = data["brand"]
-        if "condition" in data:
-            product.condition = data["condition"]
-        if "material" in data:
-            product.material = data["material"]
-        if "color" in data:
-            product.color = data["color"]
-        if "price" in data:
-            product.price = float(data["price"])
-        if "discount" in data:
-            product.discount = float(data["discount"])
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
 
-        # Actualizar imágenes si se proporcionan
-        if "images" in data:
-            # Eliminar imágenes existentes
-            ProductImage.query.filter_by(product_id=product.id).delete()
-
-            # Agregar nuevas imágenes
-            for index, url in enumerate(data["images"]):
-                image = ProductImage(
-                    url=url,
-                    product_id=product.id,
-                    position=index
-                )
-                db.session.add(image)
-
-        db.session.commit()
-        return jsonify({
-            "message": "Product updated successfully",
-            "product": product.serialize()
-        }), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
-
-
-@api.route('/products/<int:product_id>', methods=['PUT'])
-@jwt_required()
-def update_product(product_id):
-    # Obtener ID del usuario del token
-    user_id = get_jwt_identity()
-
-    # Verificar que el usuario existe y es vendedor
-    user = User.query.get(int(user_id))
+    # Buscar usuario por email
+    user = User.query.filter_by(email=email).first()
     if not user:
-        return jsonify({"error": "User not found"}), 404
+        # Por seguridad, no revelar si el email existe o no
+        return jsonify({"message": "Si el correo existe, recibirás un enlace para restablecer tu contraseña"}), 200
 
-    if user.role != "seller":
-        return jsonify({"error": "Access denied, user is not a seller"}), 403
+    # Generar token único
+    token = secrets.token_urlsafe(32)
 
-    # Buscar el producto
-    product = Product.query.get(product_id)
-    if not product:
-        return jsonify({"error": "Product not found"}), 404
+    # Guardar token con tiempo de expiración (24 horas)
+    expiration = datetime.datetime.now() + datetime.timedelta(hours=24)
+    password_reset_tokens[token] = {
+        'user_id': user.id,
+        'expiration': expiration
+    }
 
-    # Verificar que el producto pertenece al vendedor
-    if product.seller_id != user.id:
-        return jsonify({"error": "Access denied, this product belongs to another seller"}), 403
+    # En un entorno real, aquí enviarías un email con el enlace
+    # Pero para desarrollo, simplemente devolvemos el token para pruebas
+    frontend_url = request.headers.get('Origin', 'http://localhost:3000')
+    reset_url = f"{frontend_url}/reset-password/{token}"
 
-    # Validar datos
+    # Para desarrollo/pruebas, devolver el token y la URL
+    return jsonify({
+        "message": "Si el correo existe, recibirás un enlace para restablecer tu contraseña",
+        "debug_token": token,  # Solo para desarrollo
+        "debug_url": reset_url  # Solo para desarrollo
+    }), 200
+
+
+@api.route('/reset-password', methods=['POST'])
+def reset_password():
     if not request.is_json:
         return jsonify({"error": "Missing JSON in request"}), 400
 
     data = request.get_json()
+    token = data.get('token')
+    new_password = data.get('new_password')
+
+    if not token or not new_password:
+        return jsonify({"error": "Token and new password are required"}), 400
+
+    # Validar longitud de contraseña
+    if len(new_password) < 6:
+        return jsonify({"error": "New password must be at least 6 characters long"}), 400
+
+    # Verificar token
+    token_data = password_reset_tokens.get(token)
+    if not token_data:
+        return jsonify({"error": "Invalid or expired token"}), 400
+
+    # Verificar expiración
+    if datetime.datetime.now() > token_data['expiration']:
+        # Eliminar token expirado
+        password_reset_tokens.pop(token, None)
+        return jsonify({"error": "Token has expired"}), 400
+
+    # Obtener usuario
+    user = User.query.get(token_data['user_id'])
+    if not user:
+        return jsonify({"error": "User not found"}), 404
 
     try:
-        # Actualizar campos del producto
-        if "title" in data:
-            product.title = data["title"]
-        if "description" in data:
-            product.description = data["description"]
-        if "category" in data:
-            product.category = data["category"]
-        if "subcategory" in data:
-            product.subcategory = data["subcategory"]
-        if "size" in data:
-            product.size = data["size"]
-        if "brand" in data:
-            product.brand = data["brand"]
-        if "condition" in data:
-            product.condition = data["condition"]
-        if "material" in data:
-            product.material = data["material"]
-        if "color" in data:
-            product.color = data["color"]
-        if "price" in data:
-            product.price = float(data["price"])
-        if "discount" in data:
-            product.discount = float(data["discount"])
-
-        # Actualizar imágenes si se proporcionan
-        if "images" in data:
-            # Eliminar imágenes existentes
-            ProductImage.query.filter_by(product_id=product.id).delete()
-
-            # Agregar nuevas imágenes
-            for index, url in enumerate(data["images"]):
-                image = ProductImage(
-                    url=url,
-                    product_id=product.id,
-                    position=index
-                )
-                db.session.add(image)
-
+        # Actualizar contraseña
+        user.password = generate_password_hash(new_password)
         db.session.commit()
-        return jsonify({
-            "message": "Product updated successfully",
-            "product": product.serialize()
-        }), 200
+
+        # Eliminar token usado
+        password_reset_tokens.pop(token, None)
+
+        return jsonify({"message": "Password reset successfully"}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
 
-@api.route('/products/<int:product_id>', methods=['GET'])
-@jwt_required()
-def get_product(product_id):
-    # Obtener ID del usuario del token
-    user_id = get_jwt_identity()
+# @api.route('/products/<int:product_id>', methods=['DELETE'])
+# @jwt_required()
+# def delete_product(product_id):
+#     # Obtener ID del usuario del token
+#     user_id = get_jwt_identity()
 
-    # Verificar que el usuario existe
-    user = User.query.get(int(user_id))
-    if not user:
-        return jsonify({"error": "User not found"}), 404
+#     # Verificar que el usuario existe y es vendedor
+#     user = User.query.get(int(user_id))
+#     if not user:
+#         return jsonify({"error": "User not found"}), 404
 
-    # Buscar el producto
-    product = Product.query.get(product_id)
-    if not product:
-        return jsonify({"error": "Product not found"}), 404
+#     if user.role != "seller":
+#         return jsonify({"error": "Access denied, user is not a seller"}), 403
 
-    # Si el usuario es el vendedor o es un comprador, puede ver el producto
-    if user.role == "seller" and product.seller_id != user.id:
-        # Si es vendedor pero no es su producto, verificar si tiene permisos
-        # Aquí podrías implementar lógica adicional si los vendedores pueden ver productos de otros
-        pass
+#     # Buscar el producto
+#     product = Product.query.get(product_id)
+#     if not product:
+#         return jsonify({"error": "Product not found"}), 404
 
-    return jsonify(product.serialize()), 200
+#     # Verificar que el producto pertenece al vendedor
+#     if product.seller_id != user.id:
+#         return jsonify({"error": "Access denied, this product belongs to another seller"}), 403
+
+#     try:
+#         db.session.delete(product)
+#         db.session.commit()
+#         return jsonify({"message": "Product deleted successfully"}), 200
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify({"error": str(e)}), 500
+
+
+# @api.route('/products/<int:product_id>', methods=['PUT'])
+# @jwt_required()
+# def update_product(product_id):
+#     # Obtener ID del usuario del token
+#     user_id = get_jwt_identity()
+
+#     # Verificar que el usuario existe y es vendedor
+#     user = User.query.get(int(user_id))
+#     if not user:
+#         return jsonify({"error": "User not found"}), 404
+
+#     if user.role != "seller":
+#         return jsonify({"error": "Access denied, user is not a seller"}), 403
+
+#     # Buscar el producto
+#     product = Product.query.get(product_id)
+#     if not product:
+#         return jsonify({"error": "Product not found"}), 404
+
+#     # Verificar que el producto pertenece al vendedor
+#     if product.seller_id != user.id:
+#         return jsonify({"error": "Access denied, this product belongs to another seller"}), 403
+
+#     # Validar datos
+#     if not request.is_json:
+#         return jsonify({"error": "Missing JSON in request"}), 400
+
+#     data = request.get_json()
+
+#     try:
+#         # Actualizar campos del producto
+#         if "title" in data:
+#             product.title = data["title"]
+#         if "description" in data:
+#             product.description = data["description"]
+#         if "category" in data:
+#             product.category = data["category"]
+#         if "subcategory" in data:
+#             product.subcategory = data["subcategory"]
+#         if "size" in data:
+#             product.size = data["size"]
+#         if "brand" in data:
+#             product.brand = data["brand"]
+#         if "condition" in data:
+#             product.condition = data["condition"]
+#         if "material" in data:
+#             product.material = data["material"]
+#         if "color" in data:
+#             product.color = data["color"]
+#         if "price" in data:
+#             product.price = float(data["price"])
+#         if "discount" in data:
+#             product.discount = float(data["discount"])
+
+#         # Actualizar imágenes si se proporcionan
+#         if "images" in data:
+#             # Eliminar imágenes existentes
+#             ProductImage.query.filter_by(product_id=product.id).delete()
+
+#             # Agregar nuevas imágenes
+#             for index, url in enumerate(data["images"]):
+#                 image = ProductImage(
+#                     url=url,
+#                     product_id=product.id,
+#                     position=index
+#                 )
+#                 db.session.add(image)
+
+#         db.session.commit()
+#         return jsonify({
+#             "message": "Product updated successfully",
+#             "product": product.serialize()
+#         }), 200
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify({"error": str(e)}), 500
+
+
+# @api.route('/products/<int:product_id>', methods=['PUT'])
+# @jwt_required()
+# def update_product(product_id):
+#     # Obtener ID del usuario del token
+#     user_id = get_jwt_identity()
+
+#     # Verificar que el usuario existe y es vendedor
+#     user = User.query.get(int(user_id))
+#     if not user:
+#         return jsonify({"error": "User not found"}), 404
+
+#     if user.role != "seller":
+#         return jsonify({"error": "Access denied, user is not a seller"}), 403
+
+#     # Buscar el producto
+#     product = Product.query.get(product_id)
+#     if not product:
+#         return jsonify({"error": "Product not found"}), 404
+
+#     # Verificar que el producto pertenece al vendedor
+#     if product.seller_id != user.id:
+#         return jsonify({"error": "Access denied, this product belongs to another seller"}), 403
+
+#     # Validar datos
+#     if not request.is_json:
+#         return jsonify({"error": "Missing JSON in request"}), 400
+
+#     data = request.get_json()
+
+#     try:
+#         # Actualizar campos del producto
+#         if "title" in data:
+#             product.title = data["title"]
+#         if "description" in data:
+#             product.description = data["description"]
+#         if "category" in data:
+#             product.category = data["category"]
+#         if "subcategory" in data:
+#             product.subcategory = data["subcategory"]
+#         if "size" in data:
+#             product.size = data["size"]
+#         if "brand" in data:
+#             product.brand = data["brand"]
+#         if "condition" in data:
+#             product.condition = data["condition"]
+#         if "material" in data:
+#             product.material = data["material"]
+#         if "color" in data:
+#             product.color = data["color"]
+#         if "price" in data:
+#             product.price = float(data["price"])
+#         if "discount" in data:
+#             product.discount = float(data["discount"])
+
+#         # Actualizar imágenes si se proporcionan
+#         if "images" in data:
+#             # Eliminar imágenes existentes
+#             ProductImage.query.filter_by(product_id=product.id).delete()
+
+#             # Agregar nuevas imágenes
+#             for index, url in enumerate(data["images"]):
+#                 image = ProductImage(
+#                     url=url,
+#                     product_id=product.id,
+#                     position=index
+#                 )
+#                 db.session.add(image)
+
+#         db.session.commit()
+#         return jsonify({
+#             "message": "Product updated successfully",
+#             "product": product.serialize()
+#         }), 200
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify({"error": str(e)}), 500
+
+
+# @api.route('/products/<int:product_id>', methods=['GET'])
+# @jwt_required()
+# def get_product(product_id):
+#     # Obtener ID del usuario del token
+#     user_id = get_jwt_identity()
+
+#     # Verificar que el usuario existe
+#     user = User.query.get(int(user_id))
+#     if not user:
+#         return jsonify({"error": "User not found"}), 404
+
+#     # Buscar el producto
+#     product = Product.query.get(product_id)
+#     if not product:
+#         return jsonify({"error": "Product not found"}), 404
+
+#     # Si el usuario es el vendedor o es un comprador, puede ver el producto
+#     if user.role == "seller" and product.seller_id != user.id:
+#         # Si es vendedor pero no es su producto, verificar si tiene permisos
+#         # Aquí podrías implementar lógica adicional si los vendedores pueden ver productos de otros
+#         pass
+
+#     return jsonify(product.serialize()), 200
