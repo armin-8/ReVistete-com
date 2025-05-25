@@ -1,26 +1,3 @@
-# """
-# This module takes care of starting the API Server, Loading the DB and Adding the endpoints
-# """
-# from flask import Flask, request, jsonify, url_for, Blueprint
-# from api.models import db, User
-# from api.utils import generate_sitemap, APIException
-# from flask_cors import CORS
-
-# api = Blueprint('api', __name__)
-
-# # Allow CORS requests to this API
-# CORS(api)
-
-
-# @api.route('/hello', methods=['POST', 'GET'])
-# def handle_hello():
-
-#     response_body = {
-#         "message": "Hello! I'm a message that came from the backend, check the network tab on the google inspector and you will see the GET request"
-#     }
-
-#     return jsonify(response_body), 200
-# src/api/routes.py (modificación)
 
 from flask import Flask, request, jsonify, url_for, Blueprint
 from api.models import db, User, Product, ProductImage, Sale
@@ -29,6 +6,8 @@ from flask_cors import CORS
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash
 import datetime
+
+from api.cloudinary_service import upload_image, upload_multiple_images, delete_image
 
 import secrets
 
@@ -654,3 +633,91 @@ def get_product(product_id):
         pass
 
     return jsonify(product.serialize()), 200
+
+
+# 🎯 NUEVO ENDPOINT: Subir imagen única
+@api.route('/upload/image', methods=['POST'])
+@jwt_required()
+def upload_single_image():
+    """
+    Endpoint para subir una imagen a Cloudinary
+    Espera un archivo con el nombre 'image' en el request
+    """
+    # Verificar que el usuario está autenticado
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Verificar que se envió un archivo
+    if 'image' not in request.files:
+        return jsonify({"error": "No image file provided"}), 400
+
+    file = request.files['image']
+
+    # Verificar que el archivo no está vacío
+    if file.filename == '':
+        return jsonify({"error": "No file selected"}), 400
+
+    # Subir imagen a Cloudinary
+    result = upload_image(file, folder=f"revistete/users/{user_id}")
+
+    if result["success"]:
+        return jsonify({
+            "message": "Image uploaded successfully",
+            "url": result["url"],
+            "public_id": result["public_id"]
+        }), 200
+    else:
+        return jsonify({
+            "error": "Failed to upload image",
+            "details": result.get("error", "Unknown error")
+        }), 500
+
+
+# 🎯 NUEVO ENDPOINT: Subir múltiples imágenes para productos
+@api.route('/upload/product-images', methods=['POST'])
+@jwt_required()
+def upload_product_images():
+    """
+    Endpoint para subir múltiples imágenes de productos
+    Espera archivos con nombres 'images[]' en el request
+    """
+    # Verificar que el usuario es vendedor
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if user.role != "seller":
+        return jsonify({"error": "Access denied, user is not a seller"}), 403
+
+    # Obtener archivos del request
+    files = request.files.getlist('images[]')
+
+    if not files:
+        return jsonify({"error": "No image files provided"}), 400
+
+    # Verificar que no se excedan 5 imágenes
+    if len(files) > 5:
+        return jsonify({"error": "Maximum 5 images allowed per product"}), 400
+
+    # Subir imágenes
+    results = upload_multiple_images(
+        files, folder=f"revistete/products/{user_id}")
+
+    # Filtrar resultados exitosos y fallidos
+    successful = [r for r in results if r["success"]]
+    failed = [r for r in results if not r["success"]]
+
+    if successful:
+        return jsonify({
+            "message": f"{len(successful)} images uploaded successfully",
+            "uploaded": successful,
+            "failed": failed
+        }), 200
+    else:
+        return jsonify({
+            "error": "Failed to upload all images",
+            "details": failed
+        }), 500
