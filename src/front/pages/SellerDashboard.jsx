@@ -1197,6 +1197,51 @@ const AddProductForm = ({ editingProduct, onProductSaved }) => {
 
         try {
             const backendUrl = import.meta.env.VITE_BACKEND_URL;
+            // 🎯 NUEVO: Primero subir las imágenes a Cloudinary
+            const imageUrls = [];
+
+            // Separar imágenes nuevas de las existentes
+            const newImages = uploadedImages.filter(img => !img.isExisting);
+            const existingImages = uploadedImages.filter(img => img.isExisting);
+
+            // Subir solo las imágenes nuevas
+            if (newImages.length > 0) {
+                const formData = new FormData();
+
+                // Agregar cada imagen nueva al FormData
+                newImages.forEach(img => {
+                    if (img.file) {
+                        formData.append('images[]', img.file);
+                    }
+                });
+
+                // Subir imágenes a Cloudinary
+                const uploadResponse = await fetch(`${backendUrl}/api/upload/product-images`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${store.auth?.token}`
+                    },
+                    body: formData
+                });
+
+                if (!uploadResponse.ok) {
+                    const uploadError = await uploadResponse.json();
+                    throw new Error(uploadError.error || 'Error al subir las imágenes');
+                }
+
+                const uploadResult = await uploadResponse.json();
+
+                // Agregar las URLs de las imágenes subidas
+                uploadResult.uploaded.forEach(img => {
+                    imageUrls.push(img.url);
+                });
+            }
+
+            // Agregar las URLs de las imágenes existentes
+            existingImages.forEach(img => {
+                imageUrls.push(img.preview);
+            });
+
 
             // Crear objeto con los datos del producto
             const productData = {
