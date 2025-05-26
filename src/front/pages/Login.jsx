@@ -140,7 +140,7 @@ const Login = () => {
                                 <div className="d-grid">
                                     <button
                                         type="submit"
-                                        className="btn btn-primary btn-lg"
+                                        className="btn btn-dark btn-lg"
                                         disabled={isSubmitting}
                                     >
                                         {isSubmitting ? (
@@ -161,7 +161,7 @@ const Login = () => {
                                         <Link to="/buyer-signup">comprador</Link>
                                     </p>
                                     <p className="mt-2">
-                                        <a href="#" className="text-decoration-none">¿Olvidaste tu contraseña?</a>
+                                        <Link to="/forgot-password" className="text-decoration-none">¿Olvidaste tu contraseña?</Link>
                                     </p>
                                 </div>
                             </form>

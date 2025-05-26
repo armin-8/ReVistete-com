@@ -16,8 +16,6 @@ import BuyerSignup from "./pages/BuyerSignup";
 import BuyerDashboard from "./pages/BuyerDashboard";
 
 
-
-
 export const router = createBrowserRouter(
   createRoutesFromElements(
     // CreateRoutesFromElements function allows you to build route elements declaratively.
@@ -39,6 +37,7 @@ export const router = createBrowserRouter(
       <Route path="/buyer-signup" element={<BuyerSignup />} />
       <Route path="/registro-comprador" element={<BuyerSignup />} />
       <Route path="/comprador/panel" element={<BuyerDashboard />} />
+      <Route path="/login" element={<Login />} />
     </Route>
   )
 );
