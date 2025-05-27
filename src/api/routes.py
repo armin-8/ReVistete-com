@@ -223,7 +223,8 @@ def register_buyer():
     data = request.get_json()
 
     # Validar campos requeridos
-    required_fields = ["email", "first_name", "last_name", "username", "password", "role"]
+    required_fields = ["email", "first_name",
+                       "last_name", "username", "password", "role"]
     for field in required_fields:
         if field not in data or not data[field]:
             return jsonify({"error": f"Missing required field: {field}"}), 400
@@ -270,7 +271,6 @@ def register_buyer():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
-
 
 
 @api.route('/categories', methods=['GET'])
@@ -716,7 +716,7 @@ def upload_single_image():
         }), 500
 
 
-# 🎯 NUEVO ENDPOINT: Subir múltiples imágenes para productos
+# :dardo: NUEVO ENDPOINT: Subir múltiples imágenes para productos
 @api.route('/upload/product-images', methods=['POST'])
 @jwt_required()
 def upload_product_images():
@@ -729,28 +729,21 @@ def upload_product_images():
     user = User.query.get(int(user_id))
     if not user:
         return jsonify({"error": "User not found"}), 404
-
     if user.role != "seller":
         return jsonify({"error": "Access denied, user is not a seller"}), 403
-
     # Obtener archivos del request
     files = request.files.getlist('images[]')
-
     if not files:
         return jsonify({"error": "No image files provided"}), 400
-
     # Verificar que no se excedan 5 imágenes
     if len(files) > 5:
         return jsonify({"error": "Maximum 5 images allowed per product"}), 400
-
     # Subir imágenes
     results = upload_multiple_images(
         files, folder=f"revistete/products/{user_id}")
-
     # Filtrar resultados exitosos y fallidos
     successful = [r for r in results if r["success"]]
     failed = [r for r in results if not r["success"]]
-
     if successful:
         return jsonify({
             "message": f"{len(successful)} images uploaded successfully",
