@@ -14,6 +14,8 @@ import SellerDashboard from "./pages/SellerDashboard";
 import Login from "./pages/Login";
 import BuyerSignup from "./pages/BuyerSignup";
 import BuyerDashboard from "./pages/BuyerDashboard";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 
 export const router = createBrowserRouter(
@@ -38,6 +40,8 @@ export const router = createBrowserRouter(
       <Route path="/registro-comprador" element={<BuyerSignup />} />
       <Route path="/comprador/panel" element={<BuyerDashboard />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
     </Route>
   )
 );
