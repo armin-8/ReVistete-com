@@ -1,26 +1,3 @@
-# """
-# This module takes care of starting the API Server, Loading the DB and Adding the endpoints
-# """
-# from flask import Flask, request, jsonify, url_for, Blueprint
-# from api.models import db, User
-# from api.utils import generate_sitemap, APIException
-# from flask_cors import CORS
-
-# api = Blueprint('api', __name__)
-
-# # Allow CORS requests to this API
-# CORS(api)
-
-
-# @api.route('/hello', methods=['POST', 'GET'])
-# def handle_hello():
-
-#     response_body = {
-#         "message": "Hello! I'm a message that came from the backend, check the network tab on the google inspector and you will see the GET request"
-#     }
-
-#     return jsonify(response_body), 200
-# src/api/routes.py (modificación)
 
 from flask import Flask, request, jsonify, url_for, Blueprint
 from api.models import db, User, Product, ProductImage, Sale
@@ -30,6 +7,8 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from flask import Blueprint, jsonify
 from werkzeug.security import generate_password_hash
 import datetime
+
+from api.cloudinary_service import upload_image, upload_multiple_images, delete_image
 
 import secrets
 
@@ -562,214 +541,224 @@ def reset_password():
         return jsonify({"error": str(e)}), 500
 
 
-# @api.route('/products/<int:product_id>', methods=['DELETE'])
-# @jwt_required()
-# def delete_product(product_id):
-#     # Obtener ID del usuario del token
-#     user_id = get_jwt_identity()
+@api.route('/products/<int:product_id>', methods=['DELETE'])
+@jwt_required()
+def delete_product(product_id):
+    # Obtener ID del usuario del token
+    user_id = get_jwt_identity()
 
-#     # Verificar que el usuario existe y es vendedor
-#     user = User.query.get(int(user_id))
-#     if not user:
-#         return jsonify({"error": "User not found"}), 404
+    # Verificar que el usuario existe y es vendedor
+    user = User.query.get(int(user_id))
+    if not user:
+        return jsonify({"error": "User not found"}), 404
 
-#     if user.role != "seller":
-#         return jsonify({"error": "Access denied, user is not a seller"}), 403
+    if user.role != "seller":
+        return jsonify({"error": "Access denied, user is not a seller"}), 403
 
-#     # Buscar el producto
-#     product = Product.query.get(product_id)
-#     if not product:
-#         return jsonify({"error": "Product not found"}), 404
+    # Buscar el producto
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({"error": "Product not found"}), 404
 
-#     # Verificar que el producto pertenece al vendedor
-#     if product.seller_id != user.id:
-#         return jsonify({"error": "Access denied, this product belongs to another seller"}), 403
+    # Verificar que el producto pertenece al vendedor
+    if product.seller_id != user.id:
+        return jsonify({"error": "Access denied, this product belongs to another seller"}), 403
 
-#     try:
-#         db.session.delete(product)
-#         db.session.commit()
-#         return jsonify({"message": "Product deleted successfully"}), 200
-#     except Exception as e:
-#         db.session.rollback()
-#         return jsonify({"error": str(e)}), 500
-
-
-# @api.route('/products/<int:product_id>', methods=['PUT'])
-# @jwt_required()
-# def update_product(product_id):
-#     # Obtener ID del usuario del token
-#     user_id = get_jwt_identity()
-
-#     # Verificar que el usuario existe y es vendedor
-#     user = User.query.get(int(user_id))
-#     if not user:
-#         return jsonify({"error": "User not found"}), 404
-
-#     if user.role != "seller":
-#         return jsonify({"error": "Access denied, user is not a seller"}), 403
-
-#     # Buscar el producto
-#     product = Product.query.get(product_id)
-#     if not product:
-#         return jsonify({"error": "Product not found"}), 404
-
-#     # Verificar que el producto pertenece al vendedor
-#     if product.seller_id != user.id:
-#         return jsonify({"error": "Access denied, this product belongs to another seller"}), 403
-
-#     # Validar datos
-#     if not request.is_json:
-#         return jsonify({"error": "Missing JSON in request"}), 400
-
-#     data = request.get_json()
-
-#     try:
-#         # Actualizar campos del producto
-#         if "title" in data:
-#             product.title = data["title"]
-#         if "description" in data:
-#             product.description = data["description"]
-#         if "category" in data:
-#             product.category = data["category"]
-#         if "subcategory" in data:
-#             product.subcategory = data["subcategory"]
-#         if "size" in data:
-#             product.size = data["size"]
-#         if "brand" in data:
-#             product.brand = data["brand"]
-#         if "condition" in data:
-#             product.condition = data["condition"]
-#         if "material" in data:
-#             product.material = data["material"]
-#         if "color" in data:
-#             product.color = data["color"]
-#         if "price" in data:
-#             product.price = float(data["price"])
-#         if "discount" in data:
-#             product.discount = float(data["discount"])
-
-#         # Actualizar imágenes si se proporcionan
-#         if "images" in data:
-#             # Eliminar imágenes existentes
-#             ProductImage.query.filter_by(product_id=product.id).delete()
-
-#             # Agregar nuevas imágenes
-#             for index, url in enumerate(data["images"]):
-#                 image = ProductImage(
-#                     url=url,
-#                     product_id=product.id,
-#                     position=index
-#                 )
-#                 db.session.add(image)
-
-#         db.session.commit()
-#         return jsonify({
-#             "message": "Product updated successfully",
-#             "product": product.serialize()
-#         }), 200
-#     except Exception as e:
-#         db.session.rollback()
-#         return jsonify({"error": str(e)}), 500
+    try:
+        db.session.delete(product)
+        db.session.commit()
+        return jsonify({"message": "Product deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 
-# @api.route('/products/<int:product_id>', methods=['PUT'])
-# @jwt_required()
-# def update_product(product_id):
-#     # Obtener ID del usuario del token
-#     user_id = get_jwt_identity()
+@api.route('/products/<int:product_id>', methods=['PUT'])
+@jwt_required()
+def update_product(product_id):
+    # Obtener ID del usuario del token
+    user_id = get_jwt_identity()
 
-#     # Verificar que el usuario existe y es vendedor
-#     user = User.query.get(int(user_id))
-#     if not user:
-#         return jsonify({"error": "User not found"}), 404
+    # Verificar que el usuario existe y es vendedor
+    user = User.query.get(int(user_id))
+    if not user:
+        return jsonify({"error": "User not found"}), 404
 
-#     if user.role != "seller":
-#         return jsonify({"error": "Access denied, user is not a seller"}), 403
+    if user.role != "seller":
+        return jsonify({"error": "Access denied, user is not a seller"}), 403
 
-#     # Buscar el producto
-#     product = Product.query.get(product_id)
-#     if not product:
-#         return jsonify({"error": "Product not found"}), 404
+    # Buscar el producto
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({"error": "Product not found"}), 404
 
-#     # Verificar que el producto pertenece al vendedor
-#     if product.seller_id != user.id:
-#         return jsonify({"error": "Access denied, this product belongs to another seller"}), 403
+    # Verificar que el producto pertenece al vendedor
+    if product.seller_id != user.id:
+        return jsonify({"error": "Access denied, this product belongs to another seller"}), 403
 
-#     # Validar datos
-#     if not request.is_json:
-#         return jsonify({"error": "Missing JSON in request"}), 400
+    # Validar datos
+    if not request.is_json:
+        return jsonify({"error": "Missing JSON in request"}), 400
 
-#     data = request.get_json()
+    data = request.get_json()
 
-#     try:
-#         # Actualizar campos del producto
-#         if "title" in data:
-#             product.title = data["title"]
-#         if "description" in data:
-#             product.description = data["description"]
-#         if "category" in data:
-#             product.category = data["category"]
-#         if "subcategory" in data:
-#             product.subcategory = data["subcategory"]
-#         if "size" in data:
-#             product.size = data["size"]
-#         if "brand" in data:
-#             product.brand = data["brand"]
-#         if "condition" in data:
-#             product.condition = data["condition"]
-#         if "material" in data:
-#             product.material = data["material"]
-#         if "color" in data:
-#             product.color = data["color"]
-#         if "price" in data:
-#             product.price = float(data["price"])
-#         if "discount" in data:
-#             product.discount = float(data["discount"])
+    try:
+        # Actualizar campos del producto
+        if "title" in data:
+            product.title = data["title"]
+        if "description" in data:
+            product.description = data["description"]
+        if "category" in data:
+            product.category = data["category"]
+        if "subcategory" in data:
+            product.subcategory = data["subcategory"]
+        if "size" in data:
+            product.size = data["size"]
+        if "brand" in data:
+            product.brand = data["brand"]
+        if "condition" in data:
+            product.condition = data["condition"]
+        if "material" in data:
+            product.material = data["material"]
+        if "color" in data:
+            product.color = data["color"]
+        if "price" in data:
+            product.price = float(data["price"])
+        if "discount" in data:
+            product.discount = float(data["discount"])
 
-#         # Actualizar imágenes si se proporcionan
-#         if "images" in data:
-#             # Eliminar imágenes existentes
-#             ProductImage.query.filter_by(product_id=product.id).delete()
+        # Actualizar imágenes si se proporcionan
+        if "images" in data:
+            # Eliminar imágenes existentes
+            ProductImage.query.filter_by(product_id=product.id).delete()
 
-#             # Agregar nuevas imágenes
-#             for index, url in enumerate(data["images"]):
-#                 image = ProductImage(
-#                     url=url,
-#                     product_id=product.id,
-#                     position=index
-#                 )
-#                 db.session.add(image)
+            # Agregar nuevas imágenes
+            for index, url in enumerate(data["images"]):
+                image = ProductImage(
+                    url=url,
+                    product_id=product.id,
+                    position=index
+                )
+                db.session.add(image)
 
-#         db.session.commit()
-#         return jsonify({
-#             "message": "Product updated successfully",
-#             "product": product.serialize()
-#         }), 200
-#     except Exception as e:
-#         db.session.rollback()
-#         return jsonify({"error": str(e)}), 500
+        db.session.commit()
+        return jsonify({
+            "message": "Product updated successfully",
+            "product": product.serialize()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 
-# @api.route('/products/<int:product_id>', methods=['GET'])
-# @jwt_required()
-# def get_product(product_id):
-#     # Obtener ID del usuario del token
-#     user_id = get_jwt_identity()
+@api.route('/products/<int:product_id>', methods=['GET'])
+@jwt_required()
+def get_product(product_id):
+    # Obtener ID del usuario del token
+    user_id = get_jwt_identity()
 
-#     # Verificar que el usuario existe
-#     user = User.query.get(int(user_id))
-#     if not user:
-#         return jsonify({"error": "User not found"}), 404
+    # Verificar que el usuario existe
+    user = User.query.get(int(user_id))
+    if not user:
+        return jsonify({"error": "User not found"}), 404
 
-#     # Buscar el producto
-#     product = Product.query.get(product_id)
-#     if not product:
-#         return jsonify({"error": "Product not found"}), 404
+    # Buscar el producto
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({"error": "Product not found"}), 404
 
-#     # Si el usuario es el vendedor o es un comprador, puede ver el producto
-#     if user.role == "seller" and product.seller_id != user.id:
-#         # Si es vendedor pero no es su producto, verificar si tiene permisos
-#         # Aquí podrías implementar lógica adicional si los vendedores pueden ver productos de otros
-#         pass
+    # Si el usuario es el vendedor o es un comprador, puede ver el producto
+    if user.role == "seller" and product.seller_id != user.id:
+        # Si es vendedor pero no es su producto, verificar si tiene permisos
+        # Aquí podrías implementar lógica adicional si los vendedores pueden ver productos de otros
+        pass
 
-#     return jsonify(product.serialize()), 200
+    return jsonify(product.serialize()), 200
+
+
+# 🎯 NUEVO ENDPOINT: Subir imagen única
+@api.route('/upload/image', methods=['POST'])
+@jwt_required()
+def upload_single_image():
+    """
+    Endpoint para subir una imagen a Cloudinary
+    Espera un archivo con el nombre 'image' en el request
+    """
+    # Verificar que el usuario está autenticado
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Verificar que se envió un archivo
+    if 'image' not in request.files:
+        return jsonify({"error": "No image file provided"}), 400
+
+    file = request.files['image']
+
+    # Verificar que el archivo no está vacío
+    if file.filename == '':
+        return jsonify({"error": "No file selected"}), 400
+
+    # Subir imagen a Cloudinary
+    result = upload_image(file, folder=f"revistete/users/{user_id}")
+
+    if result["success"]:
+        return jsonify({
+            "message": "Image uploaded successfully",
+            "url": result["url"],
+            "public_id": result["public_id"]
+        }), 200
+    else:
+        return jsonify({
+            "error": "Failed to upload image",
+            "details": result.get("error", "Unknown error")
+        }), 500
+
+
+# 🎯 NUEVO ENDPOINT: Subir múltiples imágenes para productos
+@api.route('/upload/product-images', methods=['POST'])
+@jwt_required()
+def upload_product_images():
+    """
+    Endpoint para subir múltiples imágenes de productos
+    Espera archivos con nombres 'images[]' en el request
+    """
+    # Verificar que el usuario es vendedor
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if user.role != "seller":
+        return jsonify({"error": "Access denied, user is not a seller"}), 403
+
+    # Obtener archivos del request
+    files = request.files.getlist('images[]')
+
+    if not files:
+        return jsonify({"error": "No image files provided"}), 400
+
+    # Verificar que no se excedan 5 imágenes
+    if len(files) > 5:
+        return jsonify({"error": "Maximum 5 images allowed per product"}), 400
+
+    # Subir imágenes
+    results = upload_multiple_images(
+        files, folder=f"revistete/products/{user_id}")
+
+    # Filtrar resultados exitosos y fallidos
+    successful = [r for r in results if r["success"]]
+    failed = [r for r in results if not r["success"]]
+
+    if successful:
+        return jsonify({
+            "message": f"{len(successful)} images uploaded successfully",
+            "uploaded": successful,
+            "failed": failed
+        }), 200
+    else:
+        return jsonify({
+            "error": "Failed to upload all images",
+            "details": failed
+        }), 500

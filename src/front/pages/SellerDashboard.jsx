@@ -11,6 +11,10 @@ export const SellerDashboard = () => {
     const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    const [alertMessage, setAlertMessage] = useState("");
+    const [alertType, setAlertType] = useState("");
+    const [editingProduct, setEditingProduct] = useState(null);
+
     // Verificar autenticación
     useEffect(() => {
         if (!store.auth?.isAuthenticated || store.auth?.user?.role !== "seller") {
@@ -45,6 +49,50 @@ export const SellerDashboard = () => {
             setIsLoading(false);
         }
     };
+
+    // Función para eliminar un producto
+    const handleDeleteProduct = async (productId) => {
+        // Confirmación antes de eliminar
+        if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+            return;
+        }
+
+        try {
+            const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+            const response = await fetch(`${backendUrl}/api/products/${productId}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${store.auth?.token}`
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Error al eliminar el producto");
+            }
+
+            // Actualizar la lista de productos (eliminar el producto del estado)
+            setProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
+
+            // Mostrar mensaje de éxito
+            setAlertMessage("Producto eliminado correctamente");
+            setAlertType("success");
+
+        } catch (error) {
+            console.error("Error eliminando producto:", error);
+            setAlertMessage(error.message || "Ocurrió un error al eliminar el producto");
+            setAlertType("danger");
+        }
+    };
+
+
+    const handleEditProduct = (product) => {
+        setEditingProduct(product);
+        setActiveTab("add-product");
+    };
+
+
 
     return (
         <div className="container my-5 pt-5">
@@ -189,6 +237,17 @@ export const SellerDashboard = () => {
                                     </button>
                                 </div>
 
+                                {alertMessage && (
+                                    <div className={`alert alert-${alertType} alert-dismissible fade show`} role="alert">
+                                        {alertMessage}
+                                        <button
+                                            type="button"
+                                            className="btn-close"
+                                            onClick={() => setAlertMessage("")}
+                                        ></button>
+                                    </div>
+                                )}
+
                                 {isLoading ? (
                                     <div className="text-center my-5">
                                         <div className="spinner-border text-primary" role="status">
@@ -237,10 +296,16 @@ export const SellerDashboard = () => {
                                                             <span className="badge bg-success">Activo</span>
                                                         </td>
                                                         <td>
-                                                            <button className="btn btn-sm btn-outline-primary me-1">
+                                                            <button
+                                                                className="btn btn-sm btn-outline-primary me-1"
+                                                                onClick={() => handleEditProduct(product)}
+                                                            >
                                                                 <i className="fas fa-edit"></i>
                                                             </button>
-                                                            <button className="btn btn-sm btn-outline-danger">
+                                                            <button
+                                                                className="btn btn-sm btn-outline-danger"
+                                                                onClick={() => handleDeleteProduct(product.id)}
+                                                            >
                                                                 <i className="fas fa-trash"></i>
                                                             </button>
                                                         </td>
@@ -258,9 +323,18 @@ export const SellerDashboard = () => {
                     {activeTab === "add-product" && (
                         <div className="card shadow-sm">
                             <div className="card-body">
-                                <h2 className="card-title mb-4">Añadir Nuevo Producto</h2>
+                                <h2 className="card-title mb-4">
+                                    {editingProduct ? "Editar Producto" : "Añadir Nuevo Producto"}
+                                </h2>
 
-                                <AddProductForm />
+                                <AddProductForm
+                                    editingProduct={editingProduct}
+                                    onProductSaved={() => {
+                                        loadSellerProducts();
+                                        setEditingProduct(null);
+                                        setActiveTab("products");
+                                    }}
+                                />
                             </div>
                         </div>
                     )}
@@ -291,6 +365,8 @@ export const SellerDashboard = () => {
         </div>
     );
 };
+
+
 
 // Componente para mostrar las ventas
 
@@ -340,6 +416,8 @@ const SalesSection = () => {
             </div>
         );
     }
+
+
 
     return (
         <>
@@ -977,7 +1055,7 @@ const ProfileSettings = () => {
 
 
 // Componente para el formulario de añadir producto
-const AddProductForm = () => {
+const AddProductForm = ({ editingProduct, onProductSaved }) => {
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -997,6 +1075,33 @@ const AddProductForm = () => {
     const [uploadedImages, setUploadedImages] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { store } = useGlobalReducer();
+
+    useEffect(() => {
+        if (editingProduct) {
+            setFormData({
+                title: editingProduct.title || "",
+                description: editingProduct.description || "",
+                category: editingProduct.category || "",
+                subcategory: editingProduct.subcategory || "",
+                size: editingProduct.size || "",
+                brand: editingProduct.brand || "",
+                condition: editingProduct.condition || "two_wears",
+                material: editingProduct.material || "",
+                color: editingProduct.color || "",
+                price: editingProduct.price?.toString() || "",
+                discount: editingProduct.discount?.toString() || "",
+            });
+
+            // Cargar imágenes existentes
+            if (editingProduct.images && editingProduct.images.length > 0) {
+                const images = editingProduct.images.map(image => ({
+                    preview: image.url,
+                    isExisting: true
+                }));
+                setUploadedImages(images);
+            }
+        }
+    }, [editingProduct]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -1092,6 +1197,51 @@ const AddProductForm = () => {
 
         try {
             const backendUrl = import.meta.env.VITE_BACKEND_URL;
+            // 🎯 NUEVO: Primero subir las imágenes a Cloudinary
+            const imageUrls = [];
+
+            // Separar imágenes nuevas de las existentes
+            const newImages = uploadedImages.filter(img => !img.isExisting);
+            const existingImages = uploadedImages.filter(img => img.isExisting);
+
+            // Subir solo las imágenes nuevas
+            if (newImages.length > 0) {
+                const formData = new FormData();
+
+                // Agregar cada imagen nueva al FormData
+                newImages.forEach(img => {
+                    if (img.file) {
+                        formData.append('images[]', img.file);
+                    }
+                });
+
+                // Subir imágenes a Cloudinary
+                const uploadResponse = await fetch(`${backendUrl}/api/upload/product-images`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${store.auth?.token}`
+                    },
+                    body: formData
+                });
+
+                if (!uploadResponse.ok) {
+                    const uploadError = await uploadResponse.json();
+                    throw new Error(uploadError.error || 'Error al subir las imágenes');
+                }
+
+                const uploadResult = await uploadResponse.json();
+
+                // Agregar las URLs de las imágenes subidas
+                uploadResult.uploaded.forEach(img => {
+                    imageUrls.push(img.url);
+                });
+            }
+
+            // Agregar las URLs de las imágenes existentes
+            existingImages.forEach(img => {
+                imageUrls.push(img.preview);
+            });
+
 
             // Crear objeto con los datos del producto
             const productData = {
@@ -1109,9 +1259,18 @@ const AddProductForm = () => {
                 images: uploadedImages.map(img => img.preview) // Por ahora usamos las previews
             };
 
-            // Enviar petición POST al backend
-            const response = await fetch(`${backendUrl}/api/products`, {
-                method: "POST",
+
+
+            // Determinar si es una edición o una creación
+            const url = editingProduct
+                ? `${backendUrl}/api/products/${editingProduct.id}`
+                : `${backendUrl}/api/products`;
+
+            const method = editingProduct ? "PUT" : "POST";
+
+            // Enviar petición al backend
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${store.auth?.token}`
@@ -1122,11 +1281,11 @@ const AddProductForm = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || "Error al crear el producto");
+                throw new Error(data.error || `Error al ${editingProduct ? "actualizar" : "crear"} el producto`);
             }
 
-            // Éxito real
-            alert("Producto añadido exitosamente");
+            // Éxito
+            alert(`Producto ${editingProduct ? "actualizado" : "añadido"} exitosamente`);
 
             // Limpiar formulario
             setFormData({
@@ -1146,9 +1305,14 @@ const AddProductForm = () => {
 
             setUploadedImages([]);
 
+            // Notificar al componente padre
+            if (onProductSaved) {
+                onProductSaved();
+            }
+
         } catch (error) {
             setErrors({
-                general: error.message || "Ocurrió un error al añadir el producto"
+                general: error.message || `Ocurrió un error al ${editingProduct ? "actualizar" : "añadir"} el producto`
             });
         } finally {
             setIsSubmitting(false);
@@ -1442,7 +1606,13 @@ const AddProductForm = () => {
             </div>
 
             <div className="d-flex justify-content-between">
-                <button type="button" className="btn btn-outline-secondary">Guardar borrador</button>
+                {/* El botón de guardar borrador se oculta en modo edición */}
+                {!editingProduct && (
+                    <button type="button" className="btn btn-outline-secondary">
+                        Guardar borrador
+                    </button>
+                )}
+
                 <button
                     type="submit"
                     className="btn btn-primary"
@@ -1451,10 +1621,10 @@ const AddProductForm = () => {
                     {isSubmitting ? (
                         <>
                             <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                            Publicando...
+                            {editingProduct ? "Guardando cambios..." : "Publicando..."}
                         </>
                     ) : (
-                        "Publicar producto"
+                        editingProduct ? "Guardar cambios" : "Publicar producto"
                     )}
                 </button>
             </div>
