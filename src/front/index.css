@@ -1,3 +1,29 @@
-//*button-color {
+/*button-color {
   background-color: #f70f4d;
+}
+
+/* Solo estilos mínimos necesarios que Bootstrap no cubre */
+
+/* Transición para el navbar al hacer scroll */
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+/* Imagen del producto con zoom al hover */
+.product-card img {
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover img {
+  transform: scale(1.05);
+}
+
+/* Mostrar botón de favoritos solo al hover */
+.product-card .btn-favorite {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.product-card:hover .btn-favorite {
+  opacity: 1;
 }
