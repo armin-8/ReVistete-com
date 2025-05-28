@@ -499,6 +499,188 @@ def reset_password():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+# Endpoint público para obtener el catálogo de productos con filtros
+
+
+@api.route('/products/catalog', methods=['GET'])
+def get_products_catalog():
+    """
+    Obtiene el catálogo de productos con múltiples opciones de filtrado.
+    No requiere autenticación para que los compradores puedan navegar libremente.
+
+    Query Parameters:
+    - gender: 'hombre', 'mujer', 'unisex' (género del producto)
+    - category: categoría del producto (vestidos, camisetas, etc.)
+    - subcategory: subcategoría específica
+    - min_price: precio mínimo
+    - max_price: precio máximo
+    - size: talla específica
+    - condition: estado del producto (new, like_new, good, etc.)
+    - brand: marca del producto
+    - color: color del producto
+    - search: término de búsqueda en título y descripción
+    - sort: ordenamiento (price_asc, price_desc, newest)
+    - page: número de página (default: 1)
+    - per_page: productos por página (default: 12)
+    """
+
+    # Obtener parámetros de la query con valores por defecto
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 12, type=int)
+
+    # Limitar productos por página para evitar sobrecarga
+    if per_page > 50:
+        per_page = 50
+
+    # Obtener filtros de la query
+    gender = request.args.get('gender', '').lower()
+    category = request.args.get('category', '').lower()
+    subcategory = request.args.get('subcategory', '').lower()
+    min_price = request.args.get('min_price', type=float)
+    max_price = request.args.get('max_price', type=float)
+    size = request.args.get('size', '')
+    condition = request.args.get('condition', '')
+    brand = request.args.get('brand', '')
+    color = request.args.get('color', '').lower()
+    search = request.args.get('search', '')
+    sort = request.args.get('sort', 'newest')
+
+    # Construir la consulta base
+    query = Product.query
+
+    # Aplicar filtro de género a través de la categoría
+    # Las categorías ahora vienen en formato: genero_categoria (ej: mujer_vestidos)
+    if gender:
+        if gender == 'hombre':
+            # Filtrar categorías que empiecen con 'hombre_'
+            query = query.filter(Product.category.like('hombre_%'))
+        elif gender == 'mujer':
+            # Filtrar categorías que empiecen con 'mujer_'
+            query = query.filter(Product.category.like('mujer_%'))
+        elif gender == 'unisex':
+            # Filtrar categorías que empiecen con 'unisex_'
+            query = query.filter(Product.category.like('unisex_%'))
+
+    # Filtro por categoría específica
+    if category:
+        # Si viene solo la categoría sin género (ej: 'vestidos'), buscar en todas
+        if '_' not in category:
+            query = query.filter(
+                db.or_(
+                    # Busca '_vestidos' en cualquier género
+                    Product.category.like(f'%_{category}'),
+                    # O coincidencia parcial
+                    Product.category.ilike(f'%{category}%')
+                )
+            )
+        else:
+            # Si viene con formato completo (ej: 'mujer_vestidos')
+            query = query.filter(Product.category == category)
+
+    # Filtro por subcategoría
+    if subcategory:
+        query = query.filter(Product.subcategory.ilike(f'%{subcategory}%'))
+
+    # Filtro por rango de precio
+    if min_price is not None:
+        query = query.filter(Product.price >= min_price)
+    if max_price is not None:
+        query = query.filter(Product.price <= max_price)
+
+    # Filtro por talla
+    if size:
+        query = query.filter(Product.size == size)
+
+    # Filtro por condición/estado
+    if condition:
+        query = query.filter(Product.condition == condition)
+
+    # Filtro por marca
+    if brand:
+        query = query.filter(Product.brand.ilike(f'%{brand}%'))
+
+    # Filtro por color
+    if color:
+        query = query.filter(Product.color.ilike(f'%{color}%'))
+
+    # Búsqueda por texto en título y descripción
+    if search:
+        search_term = f'%{search}%'
+        query = query.filter(
+            db.or_(
+                Product.title.ilike(search_term),
+                Product.description.ilike(search_term),
+                Product.brand.ilike(search_term)
+            )
+        )
+
+    # Aplicar ordenamiento
+    if sort == 'price_asc':
+        # Ordenar por precio ascendente
+        query = query.order_by(Product.price.asc())
+    elif sort == 'price_desc':
+        # Ordenar por precio descendente
+        query = query.order_by(Product.price.desc())
+    elif sort == 'newest':
+        # Ordenar por más recientes primero
+        query = query.order_by(Product.created_at.desc())
+    else:
+        # Por defecto, ordenar por más recientes
+        query = query.order_by(Product.created_at.desc())
+
+    # Ejecutar paginación
+    pagination = query.paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False
+    )
+
+    # Preparar respuesta con productos serializados
+    products = [product.serialize() for product in pagination.items]
+
+    # Obtener valores únicos para los filtros disponibles
+    # Esto ayuda al frontend a mostrar qué filtros están disponibles
+    available_filters = {
+        "sizes": db.session.query(Product.size).distinct().all(),
+        "brands": db.session.query(Product.brand).filter(Product.brand.isnot(None)).distinct().all(),
+        "colors": db.session.query(Product.color).filter(Product.color.isnot(None)).distinct().all(),
+        "conditions": db.session.query(Product.condition).distinct().all(),
+    }
+
+    # Limpiar los filtros disponibles (convertir de tuplas a lista)
+    available_filters = {
+        "sizes": [size[0] for size in available_filters["sizes"] if size[0]],
+        "brands": [brand[0] for brand in available_filters["brands"] if brand[0]],
+        "colors": [color[0] for color in available_filters["colors"] if color[0]],
+        "conditions": [condition[0] for condition in available_filters["conditions"] if condition[0]],
+    }
+
+    return jsonify({
+        "products": products,
+        "pagination": {
+            "page": page,
+            "per_page": per_page,
+            "total": pagination.total,
+            "pages": pagination.pages,
+            "has_prev": pagination.has_prev,
+            "has_next": pagination.has_next
+        },
+        "available_filters": available_filters,
+        "applied_filters": {
+            "gender": gender,
+            "category": category,
+            "subcategory": subcategory,
+            "min_price": min_price,
+            "max_price": max_price,
+            "size": size,
+            "condition": condition,
+            "brand": brand,
+            "color": color,
+            "search": search,
+            "sort": sort
+        }
+    }), 200
+
 
 @api.route('/products/<int:product_id>', methods=['DELETE'])
 @jwt_required()
