@@ -15,6 +15,7 @@ import Login from "./pages/Login";
 import BuyerSignup from "./pages/BuyerSignup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import ProductCatalog from "./pages/ProductCatalog";
 
 
 export const router = createBrowserRouter(
@@ -39,6 +40,17 @@ export const router = createBrowserRouter(
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+      {/* Rutas del catálogo de productos */}
+      <Route path="/catalog" element={<ProductCatalog />} />
+      <Route path="/mujer" element={<ProductCatalog />} />
+      <Route path="/mujer/:category" element={<ProductCatalog />} />
+      <Route path="/hombre" element={<ProductCatalog />} />
+      <Route path="/hombre/:category" element={<ProductCatalog />} />
+      <Route path="/category/:category" element={<ProductCatalog />} />
+
+
+
     </Route>
   )
 );
