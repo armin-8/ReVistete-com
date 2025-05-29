@@ -820,7 +820,7 @@ def get_product(product_id):
 
 
 @api.route('/products/<int:product_id>/details', methods=['GET'])
-def get_product_details():
+def get_product_details(product_id):
     """
     Obtiene los detalles completos de un producto para la página de detalle.
     Incluye información del vendedor y productos relacionados.
