@@ -36,4 +36,20 @@ Single.propTypes = {
   match: PropTypes.object
 };
 
+// al final de tu detalle…
+<button
+  className="btn btn-primary mt-3"
+  onClick={() =>
+    dispatch({ type: "add_to_cart", payload: {
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      discount: product.discount
+    }})
+  }
+>
+  Añadir al carrito
+</button>
+
+
 export default Single;

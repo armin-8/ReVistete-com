@@ -16,6 +16,7 @@ import BuyerSignup from "./pages/BuyerSignup";
 import BuyerDashboard from "./pages/BuyerDashboard";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Cart from "./pages/Cart";
 
 
 export const router = createBrowserRouter(
@@ -42,6 +43,7 @@ export const router = createBrowserRouter(
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
+      <Route path="/carrito" element={<Cart />} />
     </Route>
   )
 );
