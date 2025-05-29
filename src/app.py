@@ -94,8 +94,6 @@ static_file_dir = os.path.join(os.path.dirname(
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
-# Configurar CORS - Permitir todas las origenes en desarrollo
-
 
 # database configuration
 db_url = os.getenv("DATABASE_URL")
