@@ -1363,60 +1363,56 @@ const AddProductForm = ({ editingProduct, onProductSaved }) => {
                         value={formData.category}
                         onChange={handleChange}
                     >
-                        <option value="">Seleccionar...</option>
-                        <option value="women">Mujer</option>
-                        <option value="men">Hombre</option>
-                        <option value="kids">Niños</option>
-                        <option value="accessories">Accesorios</option>
+                        <option value="">Seleccionar categoría...</option>
+                        
+                        {/* Categorías para Mujer */}
+                        <optgroup label="Mujer">
+                            <option value="mujer_vestidos">Vestidos</option>
+                            <option value="mujer_blusas">Blusas</option>
+                            <option value="mujer_pantalones">Pantalones</option>
+                            <option value="mujer_faldas">Faldas</option>
+                            <option value="mujer_abrigos">Abrigos</option>
+                            <option value="mujer_zapatos">Zapatos</option>
+                            <option value="mujer_deportivo">Ropa Deportiva</option>
+                        </optgroup>
+                        
+                        {/* Categorías para Hombre */}
+                        <optgroup label="Hombre">
+                            <option value="hombre_camisetas">Camisetas</option>
+                            <option value="hombre_camisas">Camisas</option>
+                            <option value="hombre_pantalones">Pantalones</option>
+                            <option value="hombre_abrigos">Abrigos</option>
+                            <option value="hombre_zapatos">Zapatos</option>
+                            <option value="hombre_deportivo">Ropa Deportiva</option>
+                        </optgroup>
+                        
+                        {/* Categorías Unisex */}
+                        <optgroup label="Unisex">
+                            <option value="unisex_accesorios">Accesorios</option>
+                            <option value="unisex_bolsos">Bolsos</option>
+                            <option value="unisex_gorras">Gorras</option>
+                        </optgroup>
                     </select>
                     {errors.category && <div className="invalid-feedback">{errors.category}</div>}
+                    <small className="form-text text-muted">
+                        Selecciona la categoría que mejor describa tu producto
+                    </small>
                 </div>
 
                 <div className="col-md-6 mb-3">
-                    <label htmlFor="subcategory" className="form-label">Subcategoría</label>
-                    <select
-                        className="form-select"
+                    <label htmlFor="subcategory" className="form-label">Subcategoría (opcional)</label>
+                    <input
+                        type="text"
+                        className="form-control"
                         id="subcategory"
                         name="subcategory"
                         value={formData.subcategory}
                         onChange={handleChange}
-                        disabled={!formData.category}
-                    >
-                        <option value="">Seleccionar...</option>
-                        {formData.category === "women" && (
-                            <>
-                                <option value="dresses">Vestidos</option>
-                                <option value="tops">Blusas</option>
-                                <option value="pants">Pantalones</option>
-                                <option value="skirts">Faldas</option>
-                                <option value="jackets">Chaquetas</option>
-                            </>
-                        )}
-                        {formData.category === "men" && (
-                            <>
-                                <option value="shirts">Camisas</option>
-                                <option value="pants">Pantalones</option>
-                                <option value="jackets">Chaquetas</option>
-                                <option value="tshirts">Camisetas</option>
-                            </>
-                        )}
-                        {formData.category === "kids" && (
-                            <>
-                                <option value="baby">Bebé</option>
-                                <option value="toddler">Niño pequeño</option>
-                                <option value="child">Niño</option>
-                                <option value="teen">Adolescente</option>
-                            </>
-                        )}
-                        {formData.category === "accessories" && (
-                            <>
-                                <option value="bags">Bolsos</option>
-                                <option value="jewelry">Joyería</option>
-                                <option value="hats">Sombreros</option>
-                                <option value="belts">Cinturones</option>
-                            </>
-                        )}
-                    </select>
+                        placeholder="Ej: Jeans, Casual, Formal, etc."
+                    />
+                    <small className="form-text text-muted">
+                        Añade más detalles sobre el tipo de prenda
+                    </small>
                 </div>
             </div>
 

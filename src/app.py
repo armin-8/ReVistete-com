@@ -1,9 +1,9 @@
 import os
 from flask import Flask, request, jsonify, url_for, send_from_directory
+from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from flask_jwt_extended import JWTManager
-from flask_cors import CORS  # 👈 Asegúrate de importar esto
 from api.utils import APIException, generate_sitemap
 from api.models import db
 from api.routes import api
@@ -15,7 +15,8 @@ static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
-# Base de datos
+
+# database configuration
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url.replace("postgres://", "postgresql://")
