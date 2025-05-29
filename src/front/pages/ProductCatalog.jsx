@@ -521,47 +521,47 @@ const ProductCatalog = () => {
                                                     <i className="far fa-heart"></i>
                                                 </button>
                                             </div>
-
-                                            <div className="card-body" >
-                                                {/* Título del producto */}
-                                                <h6 className="card-title text-truncate text-dark">
-                                                    {/* <Link to={`/product/${product.id}`} className="text-decoration-none text-dark">
-                                                    </Link> */}
-                                                    {product.title}
-                                                </h6>
-
-                                                {/* Marca y talla */}
-                                                <p className="card-text small text-muted mb-2">
-                                                    {product.brand && <span>{product.brand} • </span>}
-                                                    Talla {product.size}
-                                                </p>
-
-                                                {/* Precio */}
-                                                <div className="d-flex justify-content-between align-items-center">
-                                                    <div>
-                                                        {product.discount > 0 ? (
-                                                            <>
-                                                                <span className="text-danger fw-bold">
-                                                                    ${(product.price * (1 - product.discount / 100)).toFixed(2)}
-                                                                </span>
-                                                                <span className="text-muted text-decoration-line-through ms-2 small">
-                                                                    ${product.price}
-                                                                </span>
-                                                            </>
-                                                        ) : (
-                                                            <span className="fw-bold">${product.price}</span>
-                                                        )}
-                                                    </div>
-                                                    {/* Botón agregar al carrito */}
-                                                    <button
-                                                        className="btn btn-sm btn-outline-primary"
-                                                        onClick={() => handleAddToCart(product)}
-                                                    >
-                                                        <i className="fas fa-shopping-cart"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
                                         </Link>
+
+                                        <div className="card-body">
+                                            {/* Título del producto */}
+                                            <h6 className="card-title text-truncate">
+                                                <Link to={`/product/${product.id}`} className="text-decoration-none text-dark">
+                                                    {product.title}
+                                                </Link>
+                                            </h6>
+
+                                            {/* Marca y talla */}
+                                            <p className="card-text small text-muted mb-2">
+                                                {product.brand && <span>{product.brand} • </span>}
+                                                Talla {product.size}
+                                            </p>
+
+                                            {/* Precio */}
+                                            <div className="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    {product.discount > 0 ? (
+                                                        <>
+                                                            <span className="text-danger fw-bold">
+                                                                ${(product.price * (1 - product.discount / 100)).toFixed(2)}
+                                                            </span>
+                                                            <span className="text-muted text-decoration-line-through ms-2 small">
+                                                                ${product.price}
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="fw-bold">${product.price}</span>
+                                                    )}
+                                                </div>
+                                                {/* Botón agregar al carrito */}
+                                                <button
+                                                    className="btn btn-sm btn-outline-primary"
+                                                    onClick={() => handleAddToCart(product)}
+                                                >
+                                                    <i className="fas fa-shopping-cart"></i>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
