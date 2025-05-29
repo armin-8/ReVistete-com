@@ -816,6 +816,61 @@ def get_product(product_id):
 
     return jsonify(product.serialize()), 200
 
+# Endpoint público para ver detalles de un producto (sin autenticación requerida)
+
+
+@api.route('/products/<int:product_id>/details', methods=['GET'])
+def get_product_details():
+    """
+    Obtiene los detalles completos de un producto para la página de detalle.
+    Incluye información del vendedor y productos relacionados.
+    No requiere autenticación para que cualquiera pueda ver los productos.
+    """
+    product_id = request.view_args.get('product_id')
+
+    # Buscar el producto con su vendedor
+    product = Product.query.options(
+        db.joinedload(Product.seller),
+        db.joinedload(Product.images)
+    ).get(product_id)
+
+    if not product:
+        return jsonify({"error": "Producto no encontrado"}), 404
+
+    # Serializar el producto con información adicional
+    product_data = product.serialize()
+
+    # Agregar información del vendedor (sin datos sensibles)
+    product_data['seller'] = {
+        'id': product.seller.id,
+        'username': product.seller.username,
+        'first_name': product.seller.first_name,
+        'city': product.seller.city or 'No especificada',
+        # Puedes agregar calificación cuando implementes ese sistema
+        # 'rating': product.seller.rating,
+        # 'total_sales': product.seller.total_sales
+    }
+
+    # Obtener otros productos del mismo vendedor (máximo 4)
+    other_products = Product.query.filter(
+        Product.seller_id == product.seller_id,
+        Product.id != product_id
+    ).limit(4).all()
+
+    product_data['seller_other_products'] = [p.serialize()
+                                             for p in other_products]
+
+    # Obtener productos similares (misma categoría, diferente vendedor)
+    similar_products = Product.query.filter(
+        Product.category == product.category,
+        Product.id != product_id
+    ).limit(4).all()
+
+    product_data['similar_products'] = [p.serialize()
+                                        for p in similar_products]
+
+    return jsonify(product_data), 200
+
 
 # 🎯 NUEVO ENDPOINT: Subir imagen única
 @api.route('/upload/image', methods=['POST'])
