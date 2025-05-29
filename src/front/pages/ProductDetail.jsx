@@ -26,10 +26,11 @@ const ProductDetail = () => {
     const fetchProductDetails = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/products/${id}/details`);
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}api/products/${id}/details`);
 
             if (response.ok) {
                 const data = await response.json();
+
                 setProduct(data);
             } else {
                 console.error('Error al cargar el producto');
