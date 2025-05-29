@@ -249,6 +249,91 @@ const ProductCatalog = () => {
                                         Hombre
                                     </label>
                                 </div>
+                                <div className="form-check">
+                                    <input
+                                        className="form-check-input"
+                                        type="radio"
+                                        name="gender"
+                                        id="gender-unisex"
+                                        checked={filters.gender === 'unisex'}
+                                        onChange={() => handleFilterChange('gender', 'unisex')}
+                                    />
+                                    <label className="form-check-label" htmlFor="gender-unisex">
+                                        Unisex
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Categoría */}
+                            <div className="mb-4">
+                                <label className="form-label fw-bold">Categoría</label>
+                                <select
+                                    className="form-select"
+                                    value={filters.category}
+                                    onChange={(e) => handleFilterChange('category', e.target.value)}
+                                >
+                                    <option value="">Todas las categorías</option>
+
+                                    {/* Si hay un género seleccionado, mostrar solo sus categorías */}
+                                    {filters.gender === 'mujer' && (
+                                        <>
+                                            <option value="mujer_vestidos">Vestidos</option>
+                                            <option value="mujer_blusas">Blusas</option>
+                                            <option value="mujer_pantalones">Pantalones</option>
+                                            <option value="mujer_faldas">Faldas</option>
+                                            <option value="mujer_abrigos">Abrigos</option>
+                                            <option value="mujer_zapatos">Zapatos</option>
+                                            <option value="mujer_deportivo">Ropa Deportiva</option>
+                                        </>
+                                    )}
+
+                                    {filters.gender === 'hombre' && (
+                                        <>
+                                            <option value="hombre_camisetas">Camisetas</option>
+                                            <option value="hombre_camisas">Camisas</option>
+                                            <option value="hombre_pantalones">Pantalones</option>
+                                            <option value="hombre_abrigos">Abrigos</option>
+                                            <option value="hombre_zapatos">Zapatos</option>
+                                            <option value="hombre_deportivo">Ropa Deportiva</option>
+                                        </>
+                                    )}
+
+                                    {filters.gender === 'unisex' && (
+                                        <>
+                                            <option value="unisex_accesorios">Accesorios</option>
+                                            <option value="unisex_bolsos">Bolsos</option>
+                                            <option value="unisex_gorras">Gorras</option>
+                                        </>
+                                    )}
+
+                                    {/* Si no hay género seleccionado, mostrar todas */}
+                                    {!filters.gender && (
+                                        <>
+                                            <optgroup label="Mujer">
+                                                <option value="mujer_vestidos">Vestidos</option>
+                                                <option value="mujer_blusas">Blusas</option>
+                                                <option value="mujer_pantalones">Pantalones</option>
+                                                <option value="mujer_faldas">Faldas</option>
+                                                <option value="mujer_abrigos">Abrigos</option>
+                                                <option value="mujer_zapatos">Zapatos</option>
+                                                <option value="mujer_deportivo">Ropa Deportiva</option>
+                                            </optgroup>
+                                            <optgroup label="Hombre">
+                                                <option value="hombre_camisetas">Camisetas</option>
+                                                <option value="hombre_camisas">Camisas</option>
+                                                <option value="hombre_pantalones">Pantalones</option>
+                                                <option value="hombre_abrigos">Abrigos</option>
+                                                <option value="hombre_zapatos">Zapatos</option>
+                                                <option value="hombre_deportivo">Ropa Deportiva</option>
+                                            </optgroup>
+                                            <optgroup label="Unisex">
+                                                <option value="unisex_accesorios">Accesorios</option>
+                                                <option value="unisex_bolsos">Bolsos</option>
+                                                <option value="unisex_gorras">Gorras</option>
+                                            </optgroup>
+                                        </>
+                                    )}
+                                </select>
                             </div>
 
                             {/* Precio */}
@@ -305,10 +390,12 @@ const ProductCatalog = () => {
                                         <option value="">Todas las condiciones</option>
                                         {availableFilters.conditions.map(condition => (
                                             <option key={condition} value={condition}>
-                                                {condition === 'new' ? 'Nuevo con etiquetas' :
-                                                    condition === 'like_new' ? 'Como nuevo' :
-                                                        condition === 'good' ? 'Buen estado' :
-                                                            condition === 'fair' ? 'Estado aceptable' : condition}
+                                                {condition === 'new_with_tags' ? 'Nuevo con etiquetas' :
+                                                    condition === 'new_without_tags' ? 'Nuevo sin etiquetas' :
+                                                        condition === 'two_wears' ? 'Dos posturas' :
+                                                            condition === 'very_good' ? 'Muy buen estado' :
+                                                                condition === 'good' ? 'Buen estado' :
+                                                                    condition === 'acceptable' ? 'Aceptable' : condition}
                                             </option>
                                         ))}
                                     </select>
