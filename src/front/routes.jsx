@@ -16,6 +16,7 @@ import BuyerSignup from "./pages/BuyerSignup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ProductCatalog from "./pages/ProductCatalog";
+import ProductDetail from "./pages/ProductDetail";
 
 
 export const router = createBrowserRouter(
@@ -49,7 +50,8 @@ export const router = createBrowserRouter(
       <Route path="/hombre/:category" element={<ProductCatalog />} />
       <Route path="/category/:category" element={<ProductCatalog />} />
 
-
+      {/* Ruta de detalle del producto */}
+      <Route path="/product/:id" element={<ProductDetail />} />
 
     </Route>
   )
