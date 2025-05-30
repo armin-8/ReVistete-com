@@ -1,6 +1,6 @@
 
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Product, ProductImage, Sale
+from api.models import db, User, Product, ProductImage, Sale, Offer
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
@@ -910,6 +910,285 @@ def upload_single_image():
             "error": "Failed to upload image",
             "details": result.get("error", "Unknown error")
         }), 500
+
+
+# ========== SISTEMA DE OFERTAS ==========
+
+# Endpoint para crear una oferta en un producto
+
+
+@api.route('/products/<int:product_id>/offers', methods=['POST'])
+@jwt_required()
+def create_offer():
+    """
+    Permite a un comprador hacer una oferta en un producto.
+    El comprador envía el monto y un mensaje opcional.
+    """
+    product_id = request.view_args.get('product_id')
+    user_id = get_jwt_identity()
+
+    # Verificar que el usuario existe
+    user = User.query.get(int(user_id))
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    # Solo los compradores pueden hacer ofertas
+    if user.role != "buyer":
+        return jsonify({"error": "Solo los compradores pueden hacer ofertas"}), 403
+
+    # Obtener datos de la oferta
+    data = request.get_json()
+    if not data or 'amount' not in data:
+        return jsonify({"error": "Debe especificar el monto de la oferta"}), 400
+
+    # Buscar el producto
+    product = Product.query.get(product_id)
+    if not product:
+        return jsonify({"error": "Producto no encontrado"}), 404
+
+    # Validar el monto de la oferta
+    try:
+        amount = float(data['amount'])
+    except ValueError:
+        return jsonify({"error": "El monto debe ser un número válido"}), 400
+
+    # Validaciones del monto
+    if amount <= 0:
+        return jsonify({"error": "El monto debe ser mayor a 0"}), 400
+
+    if amount > product.price:
+        return jsonify({"error": "La oferta no puede ser mayor al precio del producto"}), 400
+
+    # Sugerencia: ofertas muy bajas (menos del 50% del precio)
+    if amount < (product.price * 0.5):
+        return jsonify({
+            "warning": "Tu oferta es muy baja, es poco probable que sea aceptada",
+            "suggested_min": product.price * 0.7
+        }), 400
+
+    # Verificar si ya tiene una oferta pendiente en este producto
+    existing_offer = Offer.query.filter_by(
+        product_id=product_id,
+        buyer_id=user.id,
+        status='pending'
+    ).first()
+
+    if existing_offer:
+        return jsonify({"error": "Ya tienes una oferta pendiente en este producto"}), 400
+
+    # Crear la nueva oferta
+    new_offer = Offer(
+        product_id=product_id,
+        buyer_id=user.id,
+        seller_id=product.seller_id,
+        amount=amount,
+        message=data.get('message', ''),
+        status='pending'
+    )
+
+    try:
+        db.session.add(new_offer)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Oferta enviada exitosamente",
+            "offer": new_offer.serialize()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+# Endpoint para que el vendedor vea sus ofertas recibidas
+@api.route('/seller/offers', methods=['GET'])
+@jwt_required()
+def get_seller_offers():
+    """
+    Obtiene todas las ofertas recibidas por el vendedor.
+    Incluye filtros por estado y ordenamiento.
+    """
+    user_id = get_jwt_identity()
+
+    # Verificar que es un vendedor
+    user = User.query.get(int(user_id))
+    if not user or user.role != "seller":
+        return jsonify({"error": "Acceso denegado"}), 403
+
+    # Obtener parámetros de filtrado
+    status = request.args.get('status', '')  # pending, accepted, rejected
+    # newest, oldest, amount_high, amount_low
+    sort = request.args.get('sort', 'newest')
+
+    # Construir query base
+    query = Offer.query.filter_by(seller_id=user.id)
+
+    # Filtrar por estado si se especifica
+    if status:
+        query = query.filter_by(status=status)
+
+    # Aplicar ordenamiento
+    if sort == 'newest':
+        query = query.order_by(Offer.created_at.desc())
+    elif sort == 'oldest':
+        query = query.order_by(Offer.created_at.asc())
+    elif sort == 'amount_high':
+        query = query.order_by(Offer.amount.desc())
+    elif sort == 'amount_low':
+        query = query.order_by(Offer.amount.asc())
+
+    # Ejecutar query
+    offers = query.all()
+
+    # Contar ofertas por estado para el dashboard
+    pending_count = Offer.query.filter_by(
+        seller_id=user.id, status='pending').count()
+    accepted_count = Offer.query.filter_by(
+        seller_id=user.id, status='accepted').count()
+    rejected_count = Offer.query.filter_by(
+        seller_id=user.id, status='rejected').count()
+
+    return jsonify({
+        "offers": [offer.serialize() for offer in offers],
+        "stats": {
+            "pending": pending_count,
+            "accepted": accepted_count,
+            "rejected": rejected_count,
+            "total": len(offers)
+        }
+    }), 200
+
+
+# Endpoint para aceptar una oferta
+@api.route('/offers/<int:offer_id>/accept', methods=['PUT'])
+@jwt_required()
+def accept_offer(offer_id):
+    """
+    Permite al vendedor aceptar una oferta.
+    Cuando se acepta, cambia el estado a 'accepted'.
+    """
+    user_id = get_jwt_identity()
+
+    # Buscar la oferta
+    offer = Offer.query.get(offer_id)
+    if not offer:
+        return jsonify({"error": "Oferta no encontrada"}), 404
+
+    # Verificar que el usuario es el vendedor del producto
+    if offer.seller_id != int(user_id):
+        return jsonify({"error": "No tienes permiso para gestionar esta oferta"}), 403
+
+    # Verificar que la oferta está pendiente
+    if offer.status != 'pending':
+        return jsonify({"error": "Esta oferta ya fue procesada"}), 400
+
+    # Obtener mensaje de respuesta opcional
+    data = request.get_json() or {}
+
+    try:
+        # Actualizar el estado de la oferta
+        offer.status = 'accepted'
+        offer.seller_response = data.get('message', 'Oferta aceptada')
+        offer.responded_at = datetime.datetime.utcnow()
+
+        # Rechazar automáticamente otras ofertas pendientes del mismo producto
+        other_offers = Offer.query.filter(
+            Offer.product_id == offer.product_id,
+            Offer.id != offer_id,
+            Offer.status == 'pending'
+        ).all()
+
+        for other in other_offers:
+            other.status = 'rejected'
+            other.seller_response = 'Otra oferta fue aceptada'
+            other.responded_at = datetime.datetime.utcnow()
+
+        db.session.commit()
+
+        return jsonify({
+            "message": "Oferta aceptada exitosamente",
+            "offer": offer.serialize()
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+# Endpoint para rechazar una oferta
+@api.route('/offers/<int:offer_id>/reject', methods=['PUT'])
+@jwt_required()
+def reject_offer(offer_id):
+    """
+    Permite al vendedor rechazar una oferta.
+    Puede incluir un mensaje explicando el rechazo.
+    """
+    user_id = get_jwt_identity()
+
+    # Buscar la oferta
+    offer = Offer.query.get(offer_id)
+    if not offer:
+        return jsonify({"error": "Oferta no encontrada"}), 404
+
+    # Verificar que el usuario es el vendedor del producto
+    if offer.seller_id != int(user_id):
+        return jsonify({"error": "No tienes permiso para gestionar esta oferta"}), 403
+
+    # Verificar que la oferta está pendiente
+    if offer.status != 'pending':
+        return jsonify({"error": "Esta oferta ya fue procesada"}), 400
+
+    # Obtener mensaje de respuesta opcional
+    data = request.get_json() or {}
+
+    try:
+        # Actualizar el estado de la oferta
+        offer.status = 'rejected'
+        offer.seller_response = data.get('message', 'Oferta rechazada')
+        offer.responded_at = datetime.datetime.utcnow()
+
+        db.session.commit()
+
+        return jsonify({
+            "message": "Oferta rechazada",
+            "offer": offer.serialize()
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+# Endpoint para que el comprador vea sus ofertas enviadas
+@api.route('/buyer/offers', methods=['GET'])
+@jwt_required()
+def get_buyer_offers():
+    """
+    Obtiene todas las ofertas enviadas por el comprador.
+    Incluye el estado actual de cada oferta.
+    """
+    user_id = get_jwt_identity()
+
+    # Verificar que es un comprador
+    user = User.query.get(int(user_id))
+    if not user or user.role != "buyer":
+        return jsonify({"error": "Acceso denegado"}), 403
+
+    # Obtener parámetros de filtrado
+    status = request.args.get('status', '')
+
+    # Construir query
+    query = Offer.query.filter_by(buyer_id=user.id)
+
+    if status:
+        query = query.filter_by(status=status)
+
+    # Ordenar por más recientes primero
+    offers = query.order_by(Offer.created_at.desc()).all()
+
+    return jsonify({
+        "offers": [offer.serialize() for offer in offers]
+    }), 200
 
 
 # 🎯 NUEVO ENDPOINT: Subir múltiples imágenes para productos

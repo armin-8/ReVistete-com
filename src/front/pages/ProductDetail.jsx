@@ -15,6 +15,7 @@ const ProductDetail = () => {
     // Estados para las funcionalidades
     const [showOfferModal, setShowOfferModal] = useState(false);
     const [offerAmount, setOfferAmount] = useState('');
+    const [offerMessage, setOfferMessage] = useState('');
     const [question, setQuestion] = useState('');
     const [quantity, setQuantity] = useState(1);
 
@@ -57,13 +58,67 @@ const ProductDetail = () => {
         }
     };
 
-    // Función para hacer una oferta (por ahora solo visual)
+    // Función para hacer una oferta (ahora funcional)
     const handleMakeOffer = () => {
         if (!store.auth?.isAuthenticated) {
             navigate('/login');
             return;
         }
+
+        // Verificar que sea un comprador
+        if (store.auth?.user?.role !== 'buyer') {
+            alert('Solo los compradores pueden hacer ofertas');
+            return;
+        }
+
         setShowOfferModal(true);
+    };
+
+    // Función para enviar la oferta al backend
+    const handleSubmitOffer = async () => {
+        if (!offerAmount || parseFloat(offerAmount) <= 0) {
+            alert('Por favor ingresa un monto válido');
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_URL}/api/products/${id}/offers`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${store.auth?.token}`
+                    },
+                    body: JSON.stringify({
+                        amount: parseFloat(offerAmount),
+                        message: offerMessage
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('\u00a1Oferta enviada exitosamente! El vendedor será notificado.');
+                setShowOfferModal(false);
+                setOfferAmount('');
+                setOfferMessage('');
+            } else {
+                // Manejar errores específicos
+                if (data.warning) {
+                    const confirm = window.confirm(
+                        `${data.warning}\n\nSe sugiere ofrecer al menos ${data.suggested_min.toFixed(2)}\n\n¿Deseas continuar con tu oferta?`
+                    );
+                    if (!confirm) return;
+                } else {
+                    alert(data.error || 'Error al enviar la oferta');
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error de conexión al enviar la oferta');
+        }
     };
 
     // Función para enviar una pregunta (por ahora solo visual)
@@ -388,8 +443,10 @@ const ProductDetail = () => {
                             </div>
                             <div className="modal-body">
                                 <p className="text-muted">Precio actual: ${product.price}</p>
+
+                                {/* Campo para el monto */}
                                 <div className="mb-3">
-                                    <label className="form-label">Tu oferta</label>
+                                    <label className="form-label">Tu oferta *</label>
                                     <div className="input-group">
                                         <span className="input-group-text">$</span>
                                         <input
@@ -398,11 +455,34 @@ const ProductDetail = () => {
                                             placeholder="0.00"
                                             value={offerAmount}
                                             onChange={(e) => setOfferAmount(e.target.value)}
+                                            step="0.01"
+                                            min="0"
                                         />
                                     </div>
                                     <small className="text-muted">
-                                        El vendedor recibirá tu oferta y podrá aceptarla o rechazarla
+                                        Sugerencia: Ofrece al menos el 70% del precio (${(product.price * 0.7).toFixed(2)})
                                     </small>
+                                </div>
+
+                                {/* Campo para el mensaje */}
+                                <div className="mb-3">
+                                    <label className="form-label">Mensaje al vendedor (opcional)</label>
+                                    <textarea
+                                        className="form-control"
+                                        rows="3"
+                                        placeholder="Hola, me interesa tu producto..."
+                                        value={offerMessage}
+                                        onChange={(e) => setOfferMessage(e.target.value)}
+                                        maxLength="200"
+                                    />
+                                    <small className="text-muted">
+                                        {offerMessage.length}/200 caracteres
+                                    </small>
+                                </div>
+
+                                <div className="alert alert-info small">
+                                    <i className="fas fa-info-circle me-2"></i>
+                                    El vendedor recibirá tu oferta y podrá aceptarla o rechazarla.
                                 </div>
                             </div>
                             <div className="modal-footer">
