@@ -138,6 +138,14 @@ export const SellerDashboard = () => {
                                 </li>
                                 <li className="nav-item">
                                     <button
+                                        className={`nav-link text-start w-100 ${activeTab === "offers" ? "active" : ""}`}
+                                        onClick={() => setActiveTab("offers")}
+                                    >
+                                        <i className="fas fa-hand-holding-usd me-2"></i> Ofertas
+                                    </button>
+                                </li>
+                                <li className="nav-item">
+                                    <button
                                         className={`nav-link text-start w-100 ${activeTab === "sales" ? "active" : ""}`}
                                         onClick={() => setActiveTab("sales")}
                                     >
@@ -624,8 +632,8 @@ const OffersSection = () => {
                                     </td>
                                     <td>
                                         <span className={`badge ${offer.status === 'pending' ? 'bg-warning' :
-                                                offer.status === 'accepted' ? 'bg-success' :
-                                                    'bg-danger'
+                                            offer.status === 'accepted' ? 'bg-success' :
+                                                'bg-danger'
                                             }`}>
                                             {offer.status === 'pending' ? 'Pendiente' :
                                                 offer.status === 'accepted' ? 'Aceptada' : 'Rechazada'}
