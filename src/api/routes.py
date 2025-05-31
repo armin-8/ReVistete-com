@@ -912,7 +912,7 @@ def upload_single_image():
         }), 500
 
 
-# ========== SISTEMA DE OFERTAS ==========
+
 
 # Endpoint para crear una oferta en un producto
 
