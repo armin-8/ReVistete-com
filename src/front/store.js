@@ -30,7 +30,77 @@ export const initialStore = () => {
 
 export default function storeReducer(store, action = {}) {
   switch (action.type) {
-    // ... otras cases (auth, set_products, remove_from_cart, etc.) ...
+    // —————————————— CASOS DE AUTENTICACIÓN ——————————————
+
+    case "auth_request": {
+      return {
+        ...store,
+        auth: {
+          ...store.auth,
+          loading: true,
+          error: null,
+        },
+      };
+    }
+
+    case "auth_success": {
+      const { token, user } = action.payload;
+
+      // Guardar en sessionStorage
+      sessionStorage.setItem("token", token);
+      sessionStorage.setItem("user", JSON.stringify(user));
+
+      return {
+        ...store,
+        auth: {
+          ...store.auth,
+          token: token,
+          user: user,
+          isAuthenticated: true,
+          loading: false,
+          error: null,
+        },
+      };
+    }
+
+    case "auth_failure": {
+      const { error } = action.payload;
+
+      // Limpiar sessionStorage
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
+
+      return {
+        ...store,
+        auth: {
+          ...store.auth,
+          token: null,
+          user: null,
+          isAuthenticated: false,
+          loading: false,
+          error: error,
+        },
+      };
+    }
+
+    case "auth_logout": {
+      // Borrar sessionStorage al hacer logout
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
+
+      return {
+        ...store,
+        auth: {
+          token: null,
+          user: null,
+          isAuthenticated: false,
+          loading: false,
+          error: null,
+        },
+      };
+    }
+
+    // —————————————— CASOS DE CARRITO ——————————————
 
     case "add_to_cart": {
       const {
@@ -48,7 +118,7 @@ export default function storeReducer(store, action = {}) {
 
       let updatedItems;
       if (existingIndex >= 0) {
-        // Ya existe en el carrito: sumamos o restamos quantity
+        // Ya existe en el carrito: sumamos/restamos quantity
         updatedItems = store.cart.items
           .map((item, idx) => {
             if (idx !== existingIndex) return item;
@@ -89,6 +159,10 @@ export default function storeReducer(store, action = {}) {
         },
       };
     }
+
+    // —————————————— OTROS CASOS (productos, todos, mensajes, etc.) ——————————————
+
+    // Aquí puedes agregar más cases como "set_products", "clear_cart", "set_message", etc.
 
     default:
       return store;
