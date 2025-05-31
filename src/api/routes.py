@@ -953,11 +953,6 @@ def upload_single_image():
         }), 500
 
 
-# ========== SISTEMA DE OFERTAS ==========
-
-# Endpoint para crear una oferta en un producto
-
-
 @api.route('/products/<int:product_id>/offers', methods=['POST'])
 @jwt_required()
 def create_offer():
