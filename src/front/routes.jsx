@@ -22,7 +22,6 @@ import Single from "/src/front/pages/Single.jsx";
 
 
 
-
 export const router = createBrowserRouter(
   createRoutesFromElements(
     // CreateRoutesFromElements function allows you to build route elements declaratively.

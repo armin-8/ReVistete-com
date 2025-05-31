@@ -952,6 +952,7 @@ def upload_single_image():
             "details": result.get("error", "Unknown error")
         }), 500
 
+#Para crear ofertas
 
 @api.route('/products/<int:product_id>/offers', methods=['POST'])
 @jwt_required()
