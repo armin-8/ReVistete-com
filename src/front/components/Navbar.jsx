@@ -168,14 +168,15 @@ const Navbar = () => {
 
             {/* Carrito */}
             <li className="nav-item">
-              <Link className="nav-link position-relative" to="/carrito">
+              <Link to="/carrito" className="nav-link position-relative">
                 <i className="fa-solid fa-cart-shopping"></i>
-                {store.cart?.items?.length > 0 && (
-                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                {store.cart.items.length > 0 && (
+                  <span className="position-absolute top-0 start-100 translate-middle badge bg-danger">
                     {store.cart.items.length}
                   </span>
                 )}
               </Link>
+
             </li>
           </ul>
         </div>

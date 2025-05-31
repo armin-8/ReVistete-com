@@ -1,43 +1,4 @@
-// export const initialStore=()=>{
-//   return{
-//     message: null,
-//     todos: [
-//       {
-//         id: 1,
-//         title: "Make the bed",
-//         background: null,
-//       },
-//       {
-//         id: 2,
-//         title: "Do my homework",
-//         background: null,
-//       }
-//     ]
-//   }
-// }
-
-// export default function storeReducer(store, action = {}) {
-//   switch(action.type){
-//     case 'set_hello':
-//       return {
-//         ...store,
-//         message: action.payload
-//       };
-
-//     case 'add_task':
-
-//       const { id,  color } = action.payload
-
-//       return {
-//         ...store,
-//         todos: store.todos.map((todo) => (todo.id === id ? { ...todo, background: color } : todo))
-//       };
-//     default:
-//       throw Error('Unknown action.');
-//   }
-// }
-
-// src/front/store.js (actualización)
+// src/front/store.js
 
 export const initialStore = () => {
   // Verificar si ya existe un token en sessionStorage
@@ -52,7 +13,6 @@ export const initialStore = () => {
       { id: 1, title: "Make the bed", background: null },
       { id: 2, title: "Do my homework", background: null },
     ],
-    // Añadir estado de autenticación
     auth: {
       token: token,
       user: user,
@@ -60,9 +20,7 @@ export const initialStore = () => {
       error: null,
       loading: false,
     },
-    // Estado para productos
     products: [],
-    // Estado para carrito
     cart: {
       items: [],
       total: 0,
@@ -72,120 +30,43 @@ export const initialStore = () => {
 
 export default function storeReducer(store, action = {}) {
   switch (action.type) {
-    case "set_hello":
-      return {
-        ...store,
-        message: action.payload,
-      };
+    // ... otras cases (auth, set_products, remove_from_cart, etc.) ...
 
-    case "add_task":
-      const { id, color } = action.payload;
-      return {
-        ...store,
-        todos: store.todos.map((todo) =>
-          todo.id === id ? { ...todo, background: color } : todo
-        ),
-      };
+    case "add_to_cart": {
+      const {
+        id,
+        title,
+        price,
+        discount = 0,
+        image = "",
+        quantity = 1,
+      } = action.payload;
 
-    // Acciones de autenticación
-    case "auth_loading":
-      return {
-        ...store,
-        auth: {
-          ...store.auth,
-          loading: true,
-          error: null,
-        },
-      };
-
-    case "auth_success":
-      // Guardar token y datos del usuario en sessionStorage
-      sessionStorage.setItem("token", action.payload.token);
-      sessionStorage.setItem("user", JSON.stringify(action.payload.user));
-
-      return {
-        ...store,
-        auth: {
-          token: action.payload.token,
-          user: action.payload.user,
-          isAuthenticated: true,
-          error: null,
-          loading: false,
-        },
-      };
-
-    case "auth_error":
-      return {
-        ...store,
-        auth: {
-          ...store.auth,
-          error: action.payload,
-          loading: false,
-        },
-      };
-
-    case "auth_logout":
-      // Limpiar sessionStorage
-      sessionStorage.removeItem("token");
-      sessionStorage.removeItem("user");
-
-      return {
-        ...store,
-        auth: {
-          token: null,
-          user: null,
-          isAuthenticated: false,
-          error: null,
-          loading: false,
-        },
-      };
-
-    // Acciones para productos
-    case "set_products":
-      return {
-        ...store,
-        products: action.payload,
-      };
-
-    // Acciones para carrito
-    case "add_to_cart":
-      const newItem = action.payload;
-      const existingItemIndex = store.cart.items.findIndex(
-        (item) => item.id === newItem.id
+      const existingIndex = store.cart.items.findIndex(
+        (item) => item.id === id
       );
 
-      if (existingItemIndex >= 0) {
-        // El producto ya está en el carrito, incrementar cantidad
-        const updatedItems = store.cart.items.map((item, index) =>
-          index === existingItemIndex
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-
-        return {
-          ...store,
-          cart: {
-            items: updatedItems,
-            total: calculateTotal(updatedItems),
-          },
-        };
+      let updatedItems;
+      if (existingIndex >= 0) {
+        // Ya existe en el carrito: sumamos o restamos quantity
+        updatedItems = store.cart.items
+          .map((item, idx) => {
+            if (idx !== existingIndex) return item;
+            const newQty = item.quantity + quantity;
+            return { ...item, quantity: newQty };
+          })
+          // Eliminamos aquellos que queden en 0 o menos
+          .filter((item) => item.quantity > 0);
       } else {
-        // Añadir nuevo producto al carrito
-        const updatedItems = [...store.cart.items, { ...newItem, quantity: 1 }];
-
-        return {
-          ...store,
-          cart: {
-            items: updatedItems,
-            total: calculateTotal(updatedItems),
-          },
-        };
+        // No existía: solo lo añadimos si quantity > 0
+        if (quantity <= 0) {
+          return store;
+        }
+        updatedItems = [
+          ...store.cart.items,
+          { id, title, price, discount, image, quantity },
+        ];
       }
-
-    case "remove_from_cart":
-      const updatedItems = store.cart.items.filter(
-        (item) => item.id !== action.payload
-      );
 
       return {
         ...store,
@@ -194,6 +75,20 @@ export default function storeReducer(store, action = {}) {
           total: calculateTotal(updatedItems),
         },
       };
+    }
+
+    case "remove_from_cart": {
+      const updatedItems = store.cart.items.filter(
+        (item) => item.id !== action.payload
+      );
+      return {
+        ...store,
+        cart: {
+          items: updatedItems,
+          total: calculateTotal(updatedItems),
+        },
+      };
+    }
 
     default:
       return store;
@@ -202,11 +97,10 @@ export default function storeReducer(store, action = {}) {
 
 // Función auxiliar para calcular el total del carrito
 function calculateTotal(items) {
-  return items.reduce((total, item) => {
-    const itemPrice = item.discount
+  return items.reduce((sum, item) => {
+    const unitPrice = item.discount
       ? item.price * (1 - item.discount / 100)
       : item.price;
-
-    return total + itemPrice * item.quantity;
+    return sum + unitPrice * item.quantity;
   }, 0);
 }

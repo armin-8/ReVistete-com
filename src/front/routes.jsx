@@ -7,7 +7,6 @@ import {
 } from "react-router-dom";
 import Home from "/src/front/pages/Home.jsx";
 import Demo from "/src/front/pages/Demo.jsx";
-import Single from "/src/front/pages/Single.jsx";
 import Layout from "/src/front/pages/Layout.jsx";
 import SellerSignup from "./pages/SellerSignup";
 import SellerDashboard from "./pages/SellerDashboard";
@@ -18,6 +17,10 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import ProductCatalog from "./pages/ProductCatalog";
 import ProductDetail from "./pages/ProductDetail";
+import Cart from "./pages/Cart";
+import Single from "/src/front/pages/Single.jsx";
+
+
 
 
 export const router = createBrowserRouter(
@@ -45,6 +48,7 @@ export const router = createBrowserRouter(
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route path="/carrito" element={<Cart />} />
+      
 
       {/* Rutas del catálogo de productos */}
       <Route path="/catalog" element={<ProductCatalog />} />
