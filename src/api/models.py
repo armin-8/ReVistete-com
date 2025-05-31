@@ -1,25 +1,3 @@
-# from flask_sqlalchemy import SQLAlchemy
-# from sqlalchemy import String, Boolean
-# from sqlalchemy.orm import Mapped, mapped_column
-
-# db = SQLAlchemy()
-
-# class User(db.Model):
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
-#     password: Mapped[str] = mapped_column(nullable=False)
-#     is_active: Mapped[bool] = mapped_column(Boolean(), nullable=False)
-
-
-#     def serialize(self):
-#         return {
-#             "id": self.id,
-#             "email": self.email,
-#             # do not serialize the password, its a security breach
-#         }
-
-# src/api/models.py (modificación)
-
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import String, Boolean, Text, Float, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -194,4 +172,75 @@ class Sale(db.Model):
             "status": self.status,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat()
+        }
+
+# Modelo Offer - Sistema de ofertas entre compradores y vendedores
+
+
+class Offer(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    # Relación con el producto
+    product_id: Mapped[int] = mapped_column(
+        ForeignKey("product.id"), nullable=False)
+
+    # Quién hace la oferta (comprador)
+    buyer_id: Mapped[int] = mapped_column(
+        ForeignKey("user.id"), nullable=False)
+
+    # Quién recibe la oferta (vendedor) - redundante pero útil para consultas
+    seller_id: Mapped[int] = mapped_column(
+        ForeignKey("user.id"), nullable=False)
+
+    # Monto de la oferta
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+
+    # Mensaje opcional del comprador al hacer la oferta
+    message: Mapped[str] = mapped_column(Text, nullable=True)
+
+    # Estado de la oferta: pending, accepted, rejected, expired
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="pending")
+
+    # Respuesta del vendedor (opcional)
+    seller_response: Mapped[str] = mapped_column(Text, nullable=True)
+
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow)
+    responded_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=True)  # Cuando el vendedor respondió
+
+    # Relaciones
+    product = relationship("Product")
+    buyer = relationship("User", foreign_keys=[buyer_id])
+    seller = relationship("User", foreign_keys=[seller_id])
+
+    def serialize(self):
+        """Convierte la oferta en un diccionario para enviar como JSON"""
+        return {
+            "id": self.id,
+            "product_id": self.product_id,
+            "product": {
+                "id": self.product.id,
+                "title": self.product.title,
+                "price": self.product.price,
+                # Solo primera imagen
+                "images": [img.serialize() for img in self.product.images[:1]]
+            } if self.product else None,
+            "buyer": {
+                "id": self.buyer.id,
+                "username": self.buyer.username,
+                "first_name": self.buyer.first_name
+            } if self.buyer else None,
+            "seller": {
+                "id": self.seller.id,
+                "username": self.seller.username
+            } if self.seller else None,
+            "amount": self.amount,
+            "message": self.message,
+            "status": self.status,
+            "seller_response": self.seller_response,
+            "created_at": self.created_at.isoformat(),
+            "responded_at": self.responded_at.isoformat() if self.responded_at else None
         }

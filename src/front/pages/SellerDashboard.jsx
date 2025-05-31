@@ -339,6 +339,17 @@ export const SellerDashboard = () => {
                         </div>
                     )}
 
+                    {/* Offers Tab */}
+                    {activeTab === "offers" && (
+                        <div className="card shadow-sm">
+                            <div className="card-body">
+                                <h2 className="card-title mb-4">Ofertas Recibidas</h2>
+                                <OffersSection />
+                            </div>
+                        </div>
+                    )}
+
+
                     {/* Sales Tab */}
                     {activeTab === "sales" && (
                         <div className="card shadow-sm">
@@ -363,6 +374,294 @@ export const SellerDashboard = () => {
                 </div>
             </div>
         </div>
+    );
+};
+
+
+// Componente para mostrar las ofertas recibidas
+const OffersSection = () => {
+    const [offers, setOffers] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [filter, setFilter] = useState(''); // '', 'pending', 'accepted', 'rejected'
+    const [stats, setStats] = useState({ pending: 0, accepted: 0, rejected: 0, total: 0 });
+    const { store } = useGlobalReducer();
+
+    useEffect(() => {
+        loadOffers();
+    }, [filter]);
+
+    const loadOffers = async () => {
+        try {
+            setIsLoading(true);
+            const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+            // Construir URL con filtros si existen
+            let url = `${backendUrl}/api/seller/offers`;
+            if (filter) {
+                url += `?status=${filter}`;
+            }
+
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${store.auth?.token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("Error al cargar las ofertas");
+            }
+
+            const data = await response.json();
+            setOffers(data.offers || []);
+            setStats(data.stats || { pending: 0, accepted: 0, rejected: 0, total: 0 });
+        } catch (error) {
+            console.error("Error loading offers:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Función para aceptar una oferta
+    const handleAcceptOffer = async (offerId) => {
+        if (!confirm("¿Estás seguro de que deseas aceptar esta oferta?")) {
+            return;
+        }
+
+        try {
+            const backendUrl = import.meta.env.VITE_BACKEND_URL;
+            const response = await fetch(`${backendUrl}/api/offers/${offerId}/accept`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${store.auth?.token}`
+                },
+                body: JSON.stringify({
+                    message: "¡Oferta aceptada! Ponte en contacto conmigo para coordinar la entrega."
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error("Error al aceptar la oferta");
+            }
+
+            alert("¡Oferta aceptada exitosamente!");
+            loadOffers(); // Recargar ofertas
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Error al aceptar la oferta");
+        }
+    };
+
+    // Función para rechazar una oferta
+    const handleRejectOffer = async (offerId) => {
+        const reason = prompt("¿Por qué rechazas esta oferta? (opcional)");
+
+        if (reason === null) return; // Canceló el prompt
+
+        try {
+            const backendUrl = import.meta.env.VITE_BACKEND_URL;
+            const response = await fetch(`${backendUrl}/api/offers/${offerId}/reject`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${store.auth?.token}`
+                },
+                body: JSON.stringify({
+                    message: reason || "Oferta rechazada"
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error("Error al rechazar la oferta");
+            }
+
+            alert("Oferta rechazada");
+            loadOffers(); // Recargar ofertas
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Error al rechazar la oferta");
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="text-center my-5">
+                <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Cargando ofertas...</span>
+                </div>
+                <p className="mt-2">Cargando ofertas...</p>
+            </div>
+        );
+    }
+
+    return (
+        <>
+            {/* Estadísticas de ofertas */}
+            <div className="row mb-4">
+                <div className="col-md-3">
+                    <div className="card bg-warning text-white">
+                        <div className="card-body text-center">
+                            <h5 className="card-title">{stats.pending}</h5>
+                            <p className="card-text mb-0">Pendientes</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="col-md-3">
+                    <div className="card bg-success text-white">
+                        <div className="card-body text-center">
+                            <h5 className="card-title">{stats.accepted}</h5>
+                            <p className="card-text mb-0">Aceptadas</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="col-md-3">
+                    <div className="card bg-danger text-white">
+                        <div className="card-body text-center">
+                            <h5 className="card-title">{stats.rejected}</h5>
+                            <p className="card-text mb-0">Rechazadas</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="col-md-3">
+                    <div className="card bg-info text-white">
+                        <div className="card-body text-center">
+                            <h5 className="card-title">{stats.total}</h5>
+                            <p className="card-text mb-0">Total</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Filtros */}
+            <div className="mb-3">
+                <div className="btn-group" role="group">
+                    <button
+                        className={`btn ${filter === '' ? 'btn-primary' : 'btn-outline-primary'}`}
+                        onClick={() => setFilter('')}
+                    >
+                        Todas
+                    </button>
+                    <button
+                        className={`btn ${filter === 'pending' ? 'btn-warning' : 'btn-outline-warning'}`}
+                        onClick={() => setFilter('pending')}
+                    >
+                        Pendientes
+                    </button>
+                    <button
+                        className={`btn ${filter === 'accepted' ? 'btn-success' : 'btn-outline-success'}`}
+                        onClick={() => setFilter('accepted')}
+                    >
+                        Aceptadas
+                    </button>
+                    <button
+                        className={`btn ${filter === 'rejected' ? 'btn-danger' : 'btn-outline-danger'}`}
+                        onClick={() => setFilter('rejected')}
+                    >
+                        Rechazadas
+                    </button>
+                </div>
+            </div>
+
+            {/* Lista de ofertas */}
+            {offers.length === 0 ? (
+                <div className="text-center my-5">
+                    <i className="fas fa-hand-holding-usd fa-4x text-muted mb-3"></i>
+                    <h4>No tienes ofertas {filter && `${filter === 'pending' ? 'pendientes' : filter === 'accepted' ? 'aceptadas' : 'rechazadas'}`}</h4>
+                    <p className="text-muted">Las ofertas de los compradores aparecerán aquí</p>
+                </div>
+            ) : (
+                <div className="table-responsive">
+                    <table className="table table-hover">
+                        <thead className="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th>Comprador</th>
+                                <th>Oferta</th>
+                                <th>Mensaje</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {offers.map(offer => (
+                                <tr key={offer.id}>
+                                    <td>
+                                        <div className="d-flex align-items-center">
+                                            <img
+                                                src={offer.product?.images?.[0]?.url || 'https://via.placeholder.com/50'}
+                                                alt={offer.product?.title}
+                                                className="img-thumbnail me-2"
+                                                style={{ width: "50px", height: "50px", objectFit: "cover" }}
+                                            />
+                                            <div>
+                                                <div className="fw-bold">{offer.product?.title}</div>
+                                                <small className="text-muted">Precio: ${offer.product?.price}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <div className="fw-bold">{offer.buyer?.first_name}</div>
+                                            <small className="text-muted">@{offer.buyer?.username}</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="fw-bold text-primary">${offer.amount}</div>
+                                        <small className="text-muted">
+                                            {((offer.amount / offer.product?.price) * 100).toFixed(0)}% del precio
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <small>{offer.message || 'Sin mensaje'}</small>
+                                    </td>
+                                    <td>
+                                        <small>
+                                            {new Date(offer.created_at).toLocaleDateString()}<br />
+                                            {new Date(offer.created_at).toLocaleTimeString()}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span className={`badge ${offer.status === 'pending' ? 'bg-warning' :
+                                                offer.status === 'accepted' ? 'bg-success' :
+                                                    'bg-danger'
+                                            }`}>
+                                            {offer.status === 'pending' ? 'Pendiente' :
+                                                offer.status === 'accepted' ? 'Aceptada' : 'Rechazada'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {offer.status === 'pending' ? (
+                                            <div className="btn-group" role="group">
+                                                <button
+                                                    className="btn btn-sm btn-success"
+                                                    onClick={() => handleAcceptOffer(offer.id)}
+                                                    title="Aceptar oferta"
+                                                >
+                                                    <i className="fas fa-check"></i>
+                                                </button>
+                                                <button
+                                                    className="btn btn-sm btn-danger"
+                                                    onClick={() => handleRejectOffer(offer.id)}
+                                                    title="Rechazar oferta"
+                                                >
+                                                    <i className="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <small className="text-muted">
+                                                {offer.responded_at && new Date(offer.responded_at).toLocaleDateString()}
+                                            </small>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </>
     );
 };
 
@@ -1364,7 +1663,7 @@ const AddProductForm = ({ editingProduct, onProductSaved }) => {
                         onChange={handleChange}
                     >
                         <option value="">Seleccionar categoría...</option>
-                        
+
                         {/* Categorías para Mujer */}
                         <optgroup label="Mujer">
                             <option value="mujer_vestidos">Vestidos</option>
@@ -1375,7 +1674,7 @@ const AddProductForm = ({ editingProduct, onProductSaved }) => {
                             <option value="mujer_zapatos">Zapatos</option>
                             <option value="mujer_deportivo">Ropa Deportiva</option>
                         </optgroup>
-                        
+
                         {/* Categorías para Hombre */}
                         <optgroup label="Hombre">
                             <option value="hombre_camisetas">Camisetas</option>
@@ -1385,7 +1684,7 @@ const AddProductForm = ({ editingProduct, onProductSaved }) => {
                             <option value="hombre_zapatos">Zapatos</option>
                             <option value="hombre_deportivo">Ropa Deportiva</option>
                         </optgroup>
-                        
+
                         {/* Categorías Unisex */}
                         <optgroup label="Unisex">
                             <option value="unisex_accesorios">Accesorios</option>
