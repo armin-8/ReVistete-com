@@ -30,8 +30,10 @@ export const SellerDashboard = () => {
 
     // Función para cargar el contador de ofertas pendientes
     const loadPendingOffersCount = async () => {
+        console.log("=== DEBUGGING NOTIFICACIONES ===");
         try {
             const backendUrl = import.meta.env.VITE_BACKEND_URL;
+            console.log("Token en fetch:", store.auth?.token);
             const response = await fetch(`${backendUrl}/api/seller/offers?status=pending`, {
                 method: "GET",
                 headers: {
