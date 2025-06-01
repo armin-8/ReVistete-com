@@ -31,22 +31,39 @@ export const SellerDashboard = () => {
     // Función para cargar el contador de ofertas pendientes
     const loadPendingOffersCount = async () => {
         console.log("=== DEBUGGING NOTIFICACIONES ===");
+        console.log("Cargando ofertas pendientes...");
         try {
             const backendUrl = import.meta.env.VITE_BACKEND_URL;
-            console.log("Token en fetch:", store.auth?.token);
-            const response = await fetch(`${backendUrl}/api/seller/offers?status=pending`, {
+            console.log("Backend URL:", backendUrl);
+            console.log("Token:", store.auth?.token ? "Existe" : "No existe");
+
+            const url = `${backendUrl}/api/seller/offers?status=pending`;
+            console.log("URL completa:", url);
+
+            const response = await fetch(url, {
                 method: "GET",
                 headers: {
                     "Authorization": `Bearer ${store.auth?.token}`
                 }
             });
 
+            console.log("Response status:", response.status);
+            console.log("Response ok:", response.ok);
+
             if (response.ok) {
                 const data = await response.json();
+                console.log("Data recibida:", data);
+                console.log("Stats:", data.stats);
+                console.log("Pending count:", data.stats?.pending);
                 setPendingOffersCount(data.stats?.pending || 0);
+            } else {
+                console.error("Error en la respuesta:", response.status, response.statusText);
+                const errorText = await response.text();
+                console.error("Error text:", errorText);
             }
         } catch (error) {
-            console.error("Error loading pending offers count:", error);
+            console.error("Error en catch:", error);
+            console.error("Error completo:", error.message, error.stack);
         }
     };
 
@@ -254,6 +271,16 @@ export const SellerDashboard = () => {
                                             </button>
                                             <button className="btn btn-outline-secondary">
                                                 <i className="fas fa-cog me-2"></i> Configurar de Perfil
+                                            </button>
+                                            {/* BOTÓN DE PRUEBA TEMPORAL */}
+                                            <button
+                                                className="btn btn-warning"
+                                                onClick={() => {
+                                                    console.log("=== TEST BUTTON CLICKED ===");
+                                                    loadPendingOffersCount();
+                                                }}
+                                            >
+                                                <i className="fas fa-sync me-2"></i> Test Notificaciones
                                             </button>
                                         </div>
                                     </div>
@@ -658,10 +685,15 @@ const OffersSection = ({ onOffersUpdate }) => {
                                         <small>{offer.message || 'Sin mensaje'}</small>
                                     </td>
                                     <td>
-                                        <small>
-                                            {new Date(offer.created_at).toLocaleDateString()}<br />
-                                            {new Date(offer.created_at).toLocaleTimeString()}
-                                        </small>
+                                        {(() => {
+                                            const date = new Date(offer.created_at);
+                                            return (
+                                                <small>
+                                                    {date.toLocaleDateString()}<br />
+                                                    {date.toLocaleTimeString()}
+                                                </small>
+                                            );
+                                        })()}
                                     </td>
                                     <td>
                                         <span className={`badge ${offer.status === 'pending' ? 'bg-warning' :
