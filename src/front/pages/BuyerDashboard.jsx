@@ -19,8 +19,8 @@ const BuyerDashboard = () => {
     switch (activeTab) {
       case "orders":
         return <h2 className="text-center">Mis Compras</h2>;
-      case "favorites":
-        return <h2 className="text-center">Favoritos</h2>;
+      // case "favorites":
+      //   return <h2 className="text-center">Favoritos</h2>;
       case "settings":
         return <ConfiguracionComprador />;
       default:
@@ -73,6 +73,7 @@ const BuyerDashboard = () => {
                     <i className="fas fa-box me-2"></i> Mis Compras
                   </button>
                 </li>
+                {/*
                 <li className="nav-item">
                   <button
                     className={`nav-link text-start w-100 ${
@@ -83,6 +84,7 @@ const BuyerDashboard = () => {
                     <i className="fas fa-heart me-2"></i> Favoritos
                   </button>
                 </li>
+                */}
                 <li className="nav-item">
                   <button
                     className={`nav-link text-start w-100 ${

@@ -110,16 +110,17 @@ const Navbar = () => {
           </ul>
 
           {/* ----------- Iconos / Perfil ----------- */}
-          <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
+          <ul className="navbar-nav ms-auto mb-2 mb-lg-0 ">
             {/* Favoritos */}
-            <li className="nav-item me-3">
+            {/*<li className="nav-item me-3">
               <Link className="nav-link" to="/favoritos">
                 <i className="fa-regular fa-heart"></i>
               </Link>
             </li>
+            */}
 
             {/* Perfil */}
-            <li className="nav-item dropdown me-3">
+            <li className="nav-item dropdown me-0">
               <button
                 className="nav-link dropdown-toggle bg-transparent border-0"
                 id="profileDropdown"

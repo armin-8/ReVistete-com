@@ -442,7 +442,7 @@ const ProductCatalog = () => {
                 {/* Área principal de productos */}
                 <div className="col-lg-9">
                     {/* Encabezado con ordenamiento y botón de filtros móvil */}
-                    <div className="d-flex justify-content-between align-items-center mb-4">
+                    <div className="d-flex justify-content-between align-items-center mb-4">  
                         <div>
                             <h2>{filters.category || filters.gender || 'Todos los productos'}</h2>
                             <p className="text-muted">{pagination.total} productos encontrados</p>
@@ -509,7 +509,9 @@ const ProductCatalog = () => {
                                                         -{product.discount}%
                                                     </span>
                                                 )}
-                                                {/* Botón de favoritos */}
+                                                {/*
+                                                {/* Botón de favoritos  */}
+                                                {/* 
                                                 <button
                                                     className="btn btn-light btn-sm position-absolute top-0 end-0 m-2 rounded-circle btn-favorite"
                                                     onClick={(e) => {
@@ -520,6 +522,7 @@ const ProductCatalog = () => {
                                                 >
                                                     <i className="far fa-heart"></i>
                                                 </button>
+                                                */}
                                             </div>
                                         </Link>
 
