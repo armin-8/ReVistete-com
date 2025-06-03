@@ -27,11 +27,7 @@ const ProductDetail = () => {
     const fetchProductDetails = async () => {
         try {
             setLoading(true);
-
-            const response = await fetch(
-                `${import.meta.env.VITE_BACKEND_URL}/api/products/${id}/details`,
-                { mode: 'cors' }
-            );
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/products/${id}/details`);
 
             if (response.ok) {
                 const data = await response.json();
@@ -81,26 +77,33 @@ const ProductDetail = () => {
 
     // Enviar la oferta al backend
     const handleSubmitOffer = async () => {
+
         if (!offerAmount || parseFloat(offerAmount) <= 0) {
             alert('Por favor ingresa un monto válido');
             return;
         }
         try {
-            const response = await fetch(
-                `${import.meta.env.VITE_BACKEND_URL}/api/products/${id}/offers`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${store.auth?.token}`
-                    },
-                    body: JSON.stringify({
-                        amount: parseFloat(offerAmount),
-                        message: offerMessage
-                    })
-                }
-            );
+            const url = `${import.meta.env.VITE_BACKEND_URL}/api/products/${id}/offers`;
+            console.log("URL:", url);
+
+            const requestBody = {
+                amount: parseFloat(offerAmount),
+                message: offerMessage
+            };
+            console.log("Request body:", requestBody);
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${store.auth?.token}`
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            console.log("Response status:", response.status);
             const data = await response.json();
+            console.log("Response data:", data);
 
             if (response.ok) {
                 alert('¡Oferta enviada exitosamente! El vendedor será notificado.');
@@ -118,7 +121,7 @@ const ProductDetail = () => {
                 }
             }
         } catch (error) {
-            console.error('Error al enviar la oferta:', error);
+            console.error('Error completo:', error);
             alert('Error de conexión al enviar la oferta');
         }
     };

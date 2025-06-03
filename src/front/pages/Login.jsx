@@ -75,6 +75,10 @@ const Login = () => {
                 }
             });
 
+            // Guardar token y user en localStorage para mantener la sesión
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("user", JSON.stringify(data.user));
+
             // Redireccionar según el rol del usuario
             if (data.user.role === "seller") {
                 navigate("/seller-dashboard");

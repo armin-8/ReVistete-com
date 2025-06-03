@@ -15,6 +15,9 @@ export const SellerDashboard = () => {
     const [alertType, setAlertType] = useState("");
     const [editingProduct, setEditingProduct] = useState(null);
 
+    // Estado para notificaciones de ofertas
+    const [pendingOffersCount, setPendingOffersCount] = useState(0);
+
     // Verificar autenticación
     useEffect(() => {
         if (!store.auth?.isAuthenticated || store.auth?.user?.role !== "seller") {
@@ -24,6 +27,54 @@ export const SellerDashboard = () => {
             loadSellerProducts();
         }
     }, [store.auth, navigate]);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (!document.hidden) {  // Solo si la pestaña está visible
+                loadPendingOffersCount();
+            }
+        }, 30000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    // Función para cargar el contador de ofertas pendientes
+    const loadPendingOffersCount = async () => {
+
+        try {
+            const backendUrl = import.meta.env.VITE_BACKEND_URL;
+            console.log("Backend URL:", backendUrl);
+            console.log("Token:", store.auth?.token ? "Existe" : "No existe");
+
+            const url = `${backendUrl}/api/seller/offers?status=pending`;
+            console.log("URL completa:", url);
+
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${store.auth?.token}`
+                }
+            });
+
+            console.log("Response status:", response.status);
+            console.log("Response ok:", response.ok);
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Data recibida:", data);
+                console.log("Stats:", data.stats);
+                console.log("Pending count:", data.stats?.pending);
+                setPendingOffersCount(data.stats?.pending || 0);
+            } else {
+                console.error("Error en la respuesta:", response.status, response.statusText);
+                const errorText = await response.text();
+                console.error("Error text:", errorText);
+            }
+        } catch (error) {
+            console.error("Error en catch:", error);
+            console.error("Error completo:", error.message, error.stack);
+        }
+    };
 
     const loadSellerProducts = async () => {
         try {
@@ -138,6 +189,20 @@ export const SellerDashboard = () => {
                                 </li>
                                 <li className="nav-item">
                                     <button
+                                        className={`nav-link text-start w-100 position-relative ${activeTab === "offers" ? "active" : ""}`}
+                                        onClick={() => setActiveTab("offers")}
+                                    >
+                                        <i className="fas fa-hand-holding-usd me-2"></i> Ofertas
+                                        {pendingOffersCount > 0 && (
+                                            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                                {pendingOffersCount}
+                                                <span className="visually-hidden">ofertas pendientes</span>
+                                            </span>
+                                        )}
+                                    </button>
+                                </li>
+                                <li className="nav-item">
+                                    <button
                                         className={`nav-link text-start w-100 ${activeTab === "sales" ? "active" : ""}`}
                                         onClick={() => setActiveTab("sales")}
                                     >
@@ -216,6 +281,16 @@ export const SellerDashboard = () => {
                                             <button className="btn btn-outline-secondary">
                                                 <i className="fas fa-cog me-2"></i> Configurar de Perfil
                                             </button>
+                                            {/* BOTÓN DE PRUEBA TEMPORAL */}
+                                            {/* <button
+                                                className="btn btn-warning"
+                                                onClick={() => {
+                                                    console.log("=== TEST BUTTON CLICKED ===");
+                                                    loadPendingOffersCount();
+                                                }}
+                                            >
+                                                <i className="fas fa-sync me-2"></i> Test Notificaciones
+                                            </button> */}
                                         </div>
                                     </div>
                                 </div>
@@ -344,7 +419,7 @@ export const SellerDashboard = () => {
                         <div className="card shadow-sm">
                             <div className="card-body">
                                 <h2 className="card-title mb-4">Ofertas Recibidas</h2>
-                                <OffersSection />
+                                <OffersSection onOffersUpdate={loadPendingOffersCount} />
                             </div>
                         </div>
                     )}
@@ -379,7 +454,7 @@ export const SellerDashboard = () => {
 
 
 // Componente para mostrar las ofertas recibidas
-const OffersSection = () => {
+const OffersSection = ({ onOffersUpdate }) => {
     const [offers, setOffers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [filter, setFilter] = useState(''); // '', 'pending', 'accepted', 'rejected'
@@ -447,6 +522,7 @@ const OffersSection = () => {
 
             alert("¡Oferta aceptada exitosamente!");
             loadOffers(); // Recargar ofertas
+            if (onOffersUpdate) onOffersUpdate(); //Actualiza el contador
         } catch (error) {
             console.error("Error:", error);
             alert("Error al aceptar la oferta");
@@ -478,6 +554,7 @@ const OffersSection = () => {
 
             alert("Oferta rechazada");
             loadOffers(); // Recargar ofertas
+            if (onOffersUpdate) onOffersUpdate(); // Actualizar el contador
         } catch (error) {
             console.error("Error:", error);
             alert("Error al rechazar la oferta");
@@ -604,7 +681,7 @@ const OffersSection = () => {
                                     <td>
                                         <div>
                                             <div className="fw-bold">{offer.buyer?.first_name}</div>
-                                            <small className="text-muted">@{offer.buyer?.username}</small>
+                                            {/* <small className="text-muted">@{offer.buyer?.username}</small> */}
                                         </div>
                                     </td>
                                     <td>
@@ -617,15 +694,20 @@ const OffersSection = () => {
                                         <small>{offer.message || 'Sin mensaje'}</small>
                                     </td>
                                     <td>
-                                        <small>
-                                            {new Date(offer.created_at).toLocaleDateString()}<br />
-                                            {new Date(offer.created_at).toLocaleTimeString()}
-                                        </small>
+                                        {(() => {
+                                            const date = new Date(offer.created_at);
+                                            return (
+                                                <small>
+                                                    {date.toLocaleDateString()}<br />
+                                                    {date.toLocaleTimeString()}
+                                                </small>
+                                            );
+                                        })()}
                                     </td>
                                     <td>
                                         <span className={`badge ${offer.status === 'pending' ? 'bg-warning' :
-                                                offer.status === 'accepted' ? 'bg-success' :
-                                                    'bg-danger'
+                                            offer.status === 'accepted' ? 'bg-success' :
+                                                'bg-danger'
                                             }`}>
                                             {offer.status === 'pending' ? 'Pendiente' :
                                                 offer.status === 'accepted' ? 'Aceptada' : 'Rechazada'}

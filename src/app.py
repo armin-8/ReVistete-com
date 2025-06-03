@@ -1,3 +1,10 @@
+
+
+# src/app.py (modificación)
+
+"""
+This module takes care of starting the API Server, Loading the DB and Adding the endpoints
+"""
 import os
 from flask import Flask, request, jsonify, url_for, send_from_directory
 from flask_cors import CORS

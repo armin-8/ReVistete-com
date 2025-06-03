@@ -755,9 +755,16 @@ def upload_single_image():
         }), 500
 
 
+# Endpoint para crear una oferta en un producto
+
+
 @api.route('/products/<int:product_id>/offers', methods=['POST'])
 @jwt_required()
-def create_offer():
+def create_offer(product_id):
+    """
+    Permite a un comprador hacer una oferta en un producto.
+    El comprador envía el monto y un mensaje opcional.
+    """
     product_id = request.view_args.get('product_id')
     user_id = get_jwt_identity()
 
