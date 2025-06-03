@@ -76,11 +76,7 @@ const ProductDetail = () => {
 
     // Función para enviar la oferta al backend
     const handleSubmitOffer = async () => {
-        console.log("=== DEBUG OFFER SUBMISSION ===");
-        console.log("Offer amount:", offerAmount);
-        console.log("Product ID:", id);
-        console.log("Token exists:", !!store.auth?.token);
-        console.log("User role:", store.auth?.user?.role);
+
         if (!offerAmount || parseFloat(offerAmount) <= 0) {
             alert('Por favor ingresa un monto válido');
             return;

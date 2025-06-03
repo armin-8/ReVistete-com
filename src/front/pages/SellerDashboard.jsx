@@ -40,8 +40,7 @@ export const SellerDashboard = () => {
 
     // Función para cargar el contador de ofertas pendientes
     const loadPendingOffersCount = async () => {
-        console.log("=== DEBUGGING NOTIFICACIONES ===");
-        console.log("Cargando ofertas pendientes...");
+
         try {
             const backendUrl = import.meta.env.VITE_BACKEND_URL;
             console.log("Backend URL:", backendUrl);
@@ -682,7 +681,7 @@ const OffersSection = ({ onOffersUpdate }) => {
                                     <td>
                                         <div>
                                             <div className="fw-bold">{offer.buyer?.first_name}</div>
-                                            <small className="text-muted">@{offer.buyer?.username}</small>
+                                            {/* <small className="text-muted">@{offer.buyer?.username}</small> */}
                                         </div>
                                     </td>
                                     <td>
