@@ -28,6 +28,16 @@ export const SellerDashboard = () => {
         }
     }, [store.auth, navigate]);
 
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (!document.hidden) {  // Solo si la pestaña está visible
+                loadPendingOffersCount();
+            }
+        }, 30000);
+
+        return () => clearInterval(interval);
+    }, []);
+
     // Función para cargar el contador de ofertas pendientes
     const loadPendingOffersCount = async () => {
         console.log("=== DEBUGGING NOTIFICACIONES ===");
@@ -273,7 +283,7 @@ export const SellerDashboard = () => {
                                                 <i className="fas fa-cog me-2"></i> Configurar de Perfil
                                             </button>
                                             {/* BOTÓN DE PRUEBA TEMPORAL */}
-                                            <button
+                                            {/* <button
                                                 className="btn btn-warning"
                                                 onClick={() => {
                                                     console.log("=== TEST BUTTON CLICKED ===");
@@ -281,7 +291,7 @@ export const SellerDashboard = () => {
                                                 }}
                                             >
                                                 <i className="fas fa-sync me-2"></i> Test Notificaciones
-                                            </button>
+                                            </button> */}
                                         </div>
                                     </div>
                                 </div>
