@@ -1,12 +1,10 @@
 // src/front/pages/Cart.jsx
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 
 const Cart = () => {
   const { store, dispatch } = useGlobalReducer();
   const { items, total } = store.cart;
-  const navigate = useNavigate();
 
   const removeItem = id =>
     dispatch({ type: "remove_from_cart", payload: id });
@@ -23,6 +21,35 @@ const Cart = () => {
         quantity: delta > 0 ? delta : -1
       }
     });
+  };
+
+  // Construye el texto que se va a enviar vía WhatsApp
+  const handleContactSeller = () => {
+    if (items.length === 0) return;
+
+    // 1) Tomar el teléfono del vendedor del primer ítem
+    const firstItem = items[0];
+    const phone = firstItem.sellerPhone; // viene de product.seller.phone al agregar al carrito
+    if (!phone) {
+      alert("No hay teléfono de vendedor disponible.");
+      return;
+    }
+
+    // 2) Generar una lista de "Producto x Cantidad"
+    const itemsText = items
+      .map(item => `${item.title} x${item.quantity}`)
+      .join(", ");
+
+    // 3) Construir el mensaje
+    const message = `Hola, estoy interesado en estos productos: ${itemsText}. Subtotal: $${total.toFixed(
+      2
+    )}`;
+
+    // 4) Montar la URL de WhatsApp: https://wa.me/<phone>?text=<mensaje codificado>
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+    // 5) Abrir WhatsApp en una nueva pestaña
+    window.open(url, "_blank");
   };
 
   return (
@@ -43,7 +70,7 @@ const Cart = () => {
                 className="list-group-item d-flex justify-content-between align-items-center"
               >
                 <div className="d-flex align-items-center">
-                  {/* Esta es la imagen con width=60px */}
+                  {/* Imagen con width=60px */}
                   <img
                     src={item.image}
                     alt={item.title}
@@ -82,17 +109,16 @@ const Cart = () => {
             );
           })}
 
+          {/* Fila de Subtotal */}
           <li className="list-group-item d-flex justify-content-between">
             <strong>Subtotal</strong>
             <strong>${total.toFixed(2)}</strong>
           </li>
 
+          {/* Botón “Contacta al vendedor” que abre WhatsApp */}
           <li className="list-group-item text-end">
-            <button
-              className="btn btn-primary"
-              onClick={() => navigate("/checkout")}
-            >
-              Continuar con la compra
+            <button className="btn btn-success" onClick={handleContactSeller}>
+              Contacta al vendedor
             </button>
           </li>
         </ul>

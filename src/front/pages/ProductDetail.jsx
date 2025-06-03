@@ -19,7 +19,7 @@ const ProductDetail = () => {
     const [question, setQuestion] = useState('');
     const [quantity, setQuantity] = useState(1);
 
-    // Cargar los detalles del producto
+    // Cargar los detalles del producto cada vez que cambie el id
     useEffect(() => {
         fetchProductDetails();
     }, [id]);
@@ -27,18 +27,21 @@ const ProductDetail = () => {
     const fetchProductDetails = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}api/products/${id}/details`);
+
+            const response = await fetch(
+                `${import.meta.env.VITE_BACKEND_URL}/api/products/${id}/details`,
+                { mode: 'cors' }
+            );
 
             if (response.ok) {
                 const data = await response.json();
-
                 setProduct(data);
             } else {
-                console.error('Error al cargar el producto');
+                console.error('Error al cargar el producto, status:', response.status);
                 navigate('/catalog');
             }
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error en fetchProductDetails:', error);
             navigate('/catalog');
         } finally {
             setLoading(false);
@@ -47,40 +50,41 @@ const ProductDetail = () => {
 
     // Función para agregar al carrito
     const handleAddToCart = () => {
-        if (product) {
-            dispatch({
-                type: 'add_to_cart',
-                payload: { ...product, quantity }
-            });
+        if (!product) return;
 
-            // Mostrar notificación (puedes usar una librería como react-toastify)
-            alert('Producto agregado al carrito');
-        }
+        const item = {
+            ...product,
+            quantity,
+            sellerPhone: product.seller.phone
+        };
+
+        dispatch({
+            type: 'add_to_cart',
+            payload: item
+        });
+
+        alert('Producto agregado al carrito');
     };
 
-    // Función para hacer una oferta (ahora funcional)
+    // Función para iniciar el modal de oferta
     const handleMakeOffer = () => {
         if (!store.auth?.isAuthenticated) {
             navigate('/login');
             return;
         }
-
-        // Verificar que sea un comprador
         if (store.auth?.user?.role !== 'buyer') {
             alert('Solo los compradores pueden hacer ofertas');
             return;
         }
-
         setShowOfferModal(true);
     };
 
-    // Función para enviar la oferta al backend
+    // Enviar la oferta al backend
     const handleSubmitOffer = async () => {
         if (!offerAmount || parseFloat(offerAmount) <= 0) {
             alert('Por favor ingresa un monto válido');
             return;
         }
-
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_BACKEND_URL}/api/products/${id}/offers`,
@@ -96,54 +100,40 @@ const ProductDetail = () => {
                     })
                 }
             );
-
             const data = await response.json();
 
             if (response.ok) {
-                alert('\u00a1Oferta enviada exitosamente! El vendedor será notificado.');
+                alert('¡Oferta enviada exitosamente! El vendedor será notificado.');
                 setShowOfferModal(false);
                 setOfferAmount('');
                 setOfferMessage('');
             } else {
-                // Manejar errores específicos
                 if (data.warning) {
-                    const confirm = window.confirm(
+                    const confirmAction = window.confirm(
                         `${data.warning}\n\nSe sugiere ofrecer al menos ${data.suggested_min.toFixed(2)}\n\n¿Deseas continuar con tu oferta?`
                     );
-                    if (!confirm) return;
+                    if (!confirmAction) return;
                 } else {
                     alert(data.error || 'Error al enviar la oferta');
                 }
             }
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error al enviar la oferta:', error);
             alert('Error de conexión al enviar la oferta');
         }
     };
 
-    // Función para enviar una pregunta (por ahora solo visual)
+    // Enviar pregunta (solo simulación por ahora)
     const handleAskQuestion = () => {
         if (!store.auth?.isAuthenticated) {
             navigate('/login');
             return;
         }
-
         if (question.trim()) {
             alert(`Pregunta enviada: ${question}`);
             setQuestion('');
-            // Aquí implementarías el envío real de la pregunta
+            // Aquí iría la lógica real para enviar la pregunta al backend
         }
-    };
-
-    // Función para contactar al vendedor
-    const handleContactSeller = () => {
-        if (!store.auth?.isAuthenticated) {
-            navigate('/login');
-            return;
-        }
-
-        // Por ahora, mostrar alert. Luego puedes implementar chat o WhatsApp
-        alert(`Contactar al vendedor: ${product.seller.username}`);
     };
 
     if (loading) {
@@ -161,9 +151,7 @@ const ProductDetail = () => {
     if (!product) {
         return (
             <div className="container mt-5 pt-5">
-                <div className="alert alert-danger">
-                    Producto no encontrado
-                </div>
+                <div className="alert alert-danger">Producto no encontrado</div>
             </div>
         );
     }
@@ -186,9 +174,11 @@ const ProductDetail = () => {
                         {/* Imagen principal */}
                         <div className="main-image-container mb-3" style={{ height: '500px', overflow: 'hidden' }}>
                             <img
-                                src={product.images && product.images[selectedImage]
-                                    ? product.images[selectedImage].url
-                                    : 'https://via.placeholder.com/500'}
+                                src={
+                                    product.images && product.images[selectedImage]
+                                        ? product.images[selectedImage].url
+                                        : 'https://via.placeholder.com/500'
+                                }
                                 alt={product.title}
                                 className="img-fluid w-100 h-100"
                                 style={{ objectFit: 'contain', backgroundColor: '#f8f9fa' }}
@@ -201,9 +191,14 @@ const ProductDetail = () => {
                                 {product.images.map((image, index) => (
                                     <div
                                         key={index}
-                                        className={`border rounded cursor-pointer ${selectedImage === index ? 'border-primary border-2' : ''}`}
+                                        className={`border rounded ${selectedImage === index ? 'border-primary border-2' : ''}`}
                                         onClick={() => setSelectedImage(index)}
-                                        style={{ width: '80px', height: '80px', cursor: 'pointer', overflow: 'hidden' }}
+                                        style={{
+                                            width: '80px',
+                                            height: '80px',
+                                            cursor: 'pointer',
+                                            overflow: 'hidden'
+                                        }}
                                     >
                                         <img
                                             src={image.url}
@@ -216,19 +211,6 @@ const ProductDetail = () => {
                             </div>
                         )}
                     </div>
-
-                    {/* Acciones sociales */}
-                    <div className="d-flex justify-content-center gap-3 mt-3">
-                        <button className="btn btn-outline-secondary btn-sm">
-                            <i className="far fa-heart me-2"></i>Me gusta
-                        </button>
-                        <button className="btn btn-outline-secondary btn-sm">
-                            <i className="far fa-comment me-2"></i>0 Comentarios
-                        </button>
-                        <button className="btn btn-outline-secondary btn-sm">
-                            <i className="fas fa-share me-2"></i>Compartir
-                        </button>
-                    </div>
                 </div>
 
                 {/* Columna de información */}
@@ -237,7 +219,6 @@ const ProductDetail = () => {
                         <div className="card-body">
                             {/* Título y precio */}
                             <h1 className="h3 mb-3">{product.title}</h1>
-
                             <div className="d-flex align-items-baseline mb-4">
                                 {product.discount > 0 ? (
                                     <>
@@ -256,16 +237,10 @@ const ProductDetail = () => {
 
                             {/* Botones principales */}
                             <div className="d-grid gap-2 mb-4">
-                                <button
-                                    className="btn btn-primary btn-lg"
-                                    onClick={handleAddToCart}
-                                >
+                                <button className="btn btn-primary btn-lg" onClick={handleAddToCart}>
                                     Agregar al carrito
                                 </button>
-                                <button
-                                    className="btn btn-outline-primary btn-lg"
-                                    onClick={handleMakeOffer}
-                                >
+                                <button className="btn btn-outline-primary btn-lg" onClick={handleMakeOffer}>
                                     Hacer oferta
                                 </button>
                             </div>
@@ -315,13 +290,15 @@ const ProductDetail = () => {
                                 </table>
                             </div>
 
-                            {/* Información del vendedor */}
+                            {/* Información del vendedor (sin botón de contactar) */}
                             <div className="card bg-light mb-4">
                                 <div className="card-body">
                                     <h5 className="card-title mb-3">Vendedor</h5>
                                     <div className="d-flex align-items-center mb-3">
-                                        <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
-                                            style={{ width: '50px', height: '50px' }}>
+                                        <div
+                                            className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
+                                            style={{ width: '50px', height: '50px' }}
+                                        >
                                             <i className="fas fa-user"></i>
                                         </div>
                                         <div>
@@ -333,12 +310,7 @@ const ProductDetail = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <button
-                                        className="btn btn-outline-primary btn-sm w-100"
-                                        onClick={handleContactSeller}
-                                    >
-                                        Contactar vendedor
-                                    </button>
+                                    {/* El botón "Contactar vendedor" ha sido ocultado */}
                                 </div>
                             </div>
 
@@ -380,9 +352,11 @@ const ProductDetail = () => {
                                 <Link to={`/product/${item.id}`} className="text-decoration-none">
                                     <div className="card h-100 product-card">
                                         <img
-                                            src={item.images && item.images[0]
-                                                ? item.images[0].url
-                                                : 'https://via.placeholder.com/200'}
+                                            src={
+                                                item.images && item.images[0]
+                                                    ? item.images[0].url
+                                                    : 'https://via.placeholder.com/200'
+                                            }
                                             className="card-img-top"
                                             alt={item.title}
                                             style={{ height: '200px', objectFit: 'cover' }}
@@ -409,9 +383,11 @@ const ProductDetail = () => {
                                 <Link to={`/product/${item.id}`} className="text-decoration-none">
                                     <div className="card h-100 product-card">
                                         <img
-                                            src={item.images && item.images[0]
-                                                ? item.images[0].url
-                                                : 'https://via.placeholder.com/200'}
+                                            src={
+                                                item.images && item.images[0]
+                                                    ? item.images[0].url
+                                                    : 'https://via.placeholder.com/200'
+                                            }
                                             className="card-img-top"
                                             alt={item.title}
                                             style={{ height: '200px', objectFit: 'cover' }}
@@ -430,7 +406,11 @@ const ProductDetail = () => {
 
             {/* Modal para hacer oferta */}
             {showOfferModal && (
-                <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                <div
+                    className="modal show d-block"
+                    tabIndex="-1"
+                    style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+                >
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
@@ -475,9 +455,7 @@ const ProductDetail = () => {
                                         onChange={(e) => setOfferMessage(e.target.value)}
                                         maxLength="200"
                                     />
-                                    <small className="text-muted">
-                                        {offerMessage.length}/200 caracteres
-                                    </small>
+                                    <small className="text-muted">{offerMessage.length}/200 caracteres</small>
                                 </div>
 
                                 <div className="alert alert-info small">
@@ -496,11 +474,7 @@ const ProductDetail = () => {
                                 <button
                                     type="button"
                                     className="btn btn-primary"
-                                    onClick={() => {
-                                        alert(`Oferta de $${offerAmount} enviada`);
-                                        setShowOfferModal(false);
-                                        setOfferAmount('');
-                                    }}
+                                    onClick={handleSubmitOffer}
                                     disabled={!offerAmount || parseFloat(offerAmount) <= 0}
                                 >
                                     Enviar oferta
@@ -514,7 +488,7 @@ const ProductDetail = () => {
     );
 };
 
-// Funciones auxiliares para mostrar nombres amigables
+// Funciones auxiliares para nombres amigables
 const getCategoryName = (category) => {
     const categoryMap = {
         'mujer_vestidos': 'Vestidos',
@@ -534,7 +508,6 @@ const getCategoryName = (category) => {
         'unisex_bolsos': 'Bolsos',
         'unisex_gorras': 'Gorras'
     };
-
     return categoryMap[category] || category;
 };
 
@@ -542,12 +515,11 @@ const getConditionName = (condition) => {
     const conditionMap = {
         'new_with_tags': 'Nuevo con etiquetas',
         'new_without_tags': 'Nuevo sin etiquetas',
-        'two_wears': 'Dos posturas',
+        'two_wears': 'Dos usos',
         'very_good': 'Muy buen estado',
         'good': 'Buen estado',
         'acceptable': 'Aceptable'
     };
-
     return conditionMap[condition] || condition;
 };
 

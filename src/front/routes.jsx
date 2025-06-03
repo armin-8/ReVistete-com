@@ -19,6 +19,10 @@ import ProductCatalog from "./pages/ProductCatalog";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Single from "/src/front/pages/Single.jsx";
+import Contacto from "./pages/Contacto";
+import Envios from "./pages/Envios";
+import Nosotros from "./pages/Nosotros";
+import Cambios from "./pages/Cambios";
 
 
 
@@ -47,7 +51,11 @@ export const router = createBrowserRouter(
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route path="/carrito" element={<Cart />} />
-      
+      <Route path="/contacto" element={<Contacto />} />
+      <Route path="/envios" element={<Envios />} />
+      <Route path="/nosotros" element={<Nosotros />} />
+      <Route path="/cambios" element={<Cambios />} />
+
 
       {/* Rutas del catálogo de productos */}
       <Route path="/catalog" element={<ProductCatalog />} />
