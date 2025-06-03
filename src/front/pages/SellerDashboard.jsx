@@ -33,7 +33,7 @@ export const SellerDashboard = () => {
             if (!document.hidden) {  // Solo si la pestaña está visible
                 loadPendingOffersCount();
             }
-        }, 30000);
+        }, 300);
 
         return () => clearInterval(interval);
     }, []);
