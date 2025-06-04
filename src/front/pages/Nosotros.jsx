@@ -25,6 +25,7 @@ const Nosotros = () => {
 
             <hr />
 
+
             <h2 className="mt-5">¿Quiénes somos?</h2>
 
             <section className="py-5">
@@ -87,6 +88,18 @@ const Nosotros = () => {
                     </div>
                 </div>
             </section>
+
+
+            <h2 className="mt-4">Tecnologías</h2>
+            <p>
+                Frontend: React, Vite, Bootstrap 5<br />
+                Backend: Flask, Python
+                Base de Datos: PostgreSQL/SQLite
+                Autenticación: JWT
+                Almacenamiento: Cloudinary
+            </p>
+            <hr />
+
         </div>
     );
 };
