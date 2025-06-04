@@ -70,13 +70,14 @@ const Cart = () => {
                 className="list-group-item d-flex justify-content-between align-items-center"
               >
                 <div className="d-flex align-items-center">
-                  {/* Imagen con width=60px */}
+                  {/* IMAGEN OCULTA:
                   <img
                     src={item.image}
                     alt={item.title}
                     style={{ width: "60px" }}
                     className="me-3"
                   />
+                  */}
                   <div>
                     <strong>{item.title}</strong>
                     <div>

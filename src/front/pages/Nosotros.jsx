@@ -48,11 +48,7 @@ const Nosotros = () => {
                     <div className="col-lg-6 p-10">
                         <h2 className="fw-bold">¡Hola!, Mi nombre es Jazmin Monge:</h2>
                         <p className="lead">
-                            Soy una de las creadoras de ReVístete y me apasiona la moda sostenible.
-                            Siempre el enfoque es ofrecer una plataforma intuitiva que conecta a
-                            quienes desean dar una segunda vida a sus prendas, así como lograr
-                            que se apasionen en este mundo de la moda tanto para la compra como
-                            para la venta de artículos de segunda mano.
+                          Soy estudiante de Ingeniería en Sistemas, con experiencia laboral en el área financiera. Me apasiona todo lo relacionado al mundo del gimnasio y el fitness, lo que me impulsa a mantener un estilo de vida activo y saludable. Además, soy fundadora de un pequeño emprendimiento llamado MOA
                         </p>
                     </div>
                 </div>
@@ -78,11 +74,8 @@ const Nosotros = () => {
                     <div className="col-lg-6 p-10">
                         <h2 className="fw-bold">¡Hola!, Mi nombre es Armin Perez:</h2>
                         <p className="lead">
-                            Soy uno de los creadores de ReVístete , mi misión es impulsar la moda responsable.
-                            Creo fervientemente en el poder de dar vida nueva a las prendas y en la belleza
-                            de los estilos únicos que surgen de lo pre-loved. Me motiva crear una experiencia
-                            amigable y cercana donde cada usuario se sienta parte de esta comunidad que
-                            valora la sostenibilidad, el reciclaje y el impacto positivo en nuestro entorno.
+                            Ingeniero Industrial con especialización en comercio electrónico. Actualmente me desempeño como E-commerce Manager, administrando tiendas en Shopify y optimizando experiencias de compra online. Mi formación analítica, combinada con mi pasión por la tecnología disruptiva y la inteligencia artificial, me permite crear soluciones innovadoras en el mundo digital.
+                            Fuera del ámbito profesional, soy un apasionado del fútbol y la lectura. Mi espíritu emprendedor me impulsa constantemente a explorar nuevas ideas y transformarlas en proyectos que generen valor.
                             ¡Bienvenidos a ReVístete, donde cada prenda cuenta una historia!
                         </p>
                     </div>
@@ -93,10 +86,11 @@ const Nosotros = () => {
             <h2 className="mt-4">Tecnologías</h2>
             <p>
                 Frontend: React, Vite, Bootstrap 5<br />
-                Backend: Flask, Python
-                Base de Datos: PostgreSQL/SQLite
-                Autenticación: JWT
-                Almacenamiento: Cloudinary
+                Backend: Flask, Python<br />
+                Base de Datos: PostgreSQL/SQLite<br />
+                Autenticación: JWT<br />
+                Almacenamiento: Cloudinary<br />
+                Deployment: GitHub Codespaces<br />
             </p>
             <hr />
 
