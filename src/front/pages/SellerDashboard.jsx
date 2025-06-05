@@ -43,11 +43,9 @@ export const SellerDashboard = () => {
 
         try {
             const backendUrl = import.meta.env.VITE_BACKEND_URL;
-            console.log("Backend URL:", backendUrl);
-            console.log("Token:", store.auth?.token ? "Existe" : "No existe");
 
             const url = `${backendUrl}/api/seller/offers?status=pending`;
-            console.log("URL completa:", url);
+
 
             const response = await fetch(url, {
                 method: "GET",
@@ -56,14 +54,8 @@ export const SellerDashboard = () => {
                 }
             });
 
-            console.log("Response status:", response.status);
-            console.log("Response ok:", response.ok);
-
             if (response.ok) {
                 const data = await response.json();
-                console.log("Data recibida:", data);
-                console.log("Stats:", data.stats);
-                console.log("Pending count:", data.stats?.pending);
                 setPendingOffersCount(data.stats?.pending || 0);
             } else {
                 console.error("Error en la respuesta:", response.status, response.statusText);
