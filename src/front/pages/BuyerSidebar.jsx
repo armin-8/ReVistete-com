@@ -4,9 +4,9 @@ import React from "react";
 const BuyerSidebar = ({ activeTab, setActiveTab, username }) => {
   const navItems = [
     { label: "Panel Principal", icon: "bi-house", key: "overview" },
-    { label: "Mis Compras", icon: "bi-bag-check", key: "orders" },
+    /*{ label: "Mis Compras", icon: "bi-bag-check", key: "orders" },*/
     /*{ label: "Favoritos", icon: "bi-heart", key: "favorites" },*/
-    { label: "Configuración", icon: "bi-gear", key: "settings" },
+    /*{ label: "Configuración", icon: "bi-gear", key: "settings" },*/
   ];
 
   return (

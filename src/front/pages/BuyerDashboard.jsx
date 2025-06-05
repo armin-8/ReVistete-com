@@ -63,6 +63,7 @@ const BuyerDashboard = () => {
                     <i className="fas fa-home me-2"></i> Panel Principal
                   </button>
                 </li>
+                {/*
                 <li className="nav-item">
                   <button
                     className={`nav-link text-start w-100 ${
@@ -84,7 +85,7 @@ const BuyerDashboard = () => {
                     <i className="fas fa-heart me-2"></i> Favoritos
                   </button>
                 </li>
-                */}
+                }
                 <li className="nav-item">
                   <button
                     className={`nav-link text-start w-100 ${
@@ -95,6 +96,7 @@ const BuyerDashboard = () => {
                     <i className="fas fa-cog me-2"></i> Configuración
                   </button>
                 </li>
+                
 
                 {/* ---- Botón Cerrar sesión ---- */}
                 <li className="nav-item mt-2">
