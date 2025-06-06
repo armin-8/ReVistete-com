@@ -33,7 +33,8 @@ def register_seller():
     data = request.get_json()
 
     # Validar campos requeridos (ahora incluye 'phone')
-    required_fields = ["email", "password", "first_name", "last_name", "username", "phone"]
+    required_fields = ["email", "password",
+                       "first_name", "last_name", "username", "phone"]
     for field in required_fields:
         if field not in data or not data[field]:
             return jsonify({"error": f"Missing required field: {field}"}), 400
@@ -113,7 +114,8 @@ def create_product():
         return jsonify({"error": "Missing JSON in request"}), 400
 
     data = request.get_json()
-    required_fields = ["title", "description", "category", "size", "condition", "price"]
+    required_fields = ["title", "description",
+                       "category", "size", "condition", "price"]
     for field in required_fields:
         if field not in data or not data[field]:
             return jsonify({"error": f"Missing required field: {field}"}), 400
@@ -188,7 +190,8 @@ def register_buyer():
         return jsonify({"error": "Missing JSON in request"}), 400
 
     data = request.get_json()
-    required_fields = ["email", "first_name", "last_name", "username", "password", "role"]
+    required_fields = ["email", "first_name",
+                       "last_name", "username", "password", "role"]
     for field in required_fields:
         if field not in data or not data[field]:
             return jsonify({"error": f"Missing required field: {field}"}), 400
@@ -290,7 +293,8 @@ def get_seller_sales():
     if user.role != "seller":
         return jsonify({"error": "Access denied, user is not a seller"}), 403
 
-    sales = Sale.query.filter_by(seller_id=user.id).order_by(Sale.created_at.desc()).all()
+    sales = Sale.query.filter_by(seller_id=user.id).order_by(
+        Sale.created_at.desc()).all()
     total_earnings = sum(sale.price for sale in sales)
 
     return jsonify({
@@ -346,7 +350,8 @@ def update_seller_profile():
             return jsonify({"error": "Email already exists"}), 400
 
     if data["username"] != user.username:
-        existing_username = User.query.filter_by(username=data["username"]).first()
+        existing_username = User.query.filter_by(
+            username=data["username"]).first()
         if existing_username:
             return jsonify({"error": "Username already exists"}), 400
 
@@ -593,6 +598,9 @@ def delete_product(product_id):
         return jsonify({"error": "Access denied, this product belongs to another seller"}), 403
 
     try:
+        # IMPORTANTE: Primero eliminar las ofertas asociadas
+        Offer.query.filter_by(product_id=product_id).delete()
+
         db.session.delete(product)
         db.session.commit()
         return jsonify({"message": "Product deleted successfully"}), 200
@@ -714,14 +722,16 @@ def get_product_details(product_id):
         Product.id != product_id
     ).limit(4).all()
 
-    product_data['seller_other_products'] = [p.serialize() for p in other_products]
+    product_data['seller_other_products'] = [p.serialize()
+                                             for p in other_products]
 
     similar_products = Product.query.filter(
         Product.category == product.category,
         Product.id != product_id
     ).limit(4).all()
 
-    product_data['similar_products'] = [p.serialize() for p in similar_products]
+    product_data['similar_products'] = [p.serialize()
+                                        for p in similar_products]
 
     return jsonify(product_data), 200
 
@@ -857,9 +867,12 @@ def get_seller_offers():
         query = query.order_by(Offer.amount.asc())
 
     offers = query.all()
-    pending_count = Offer.query.filter_by(seller_id=user.id, status='pending').count()
-    accepted_count = Offer.query.filter_by(seller_id=user.id, status='accepted').count()
-    rejected_count = Offer.query.filter_by(seller_id=user.id, status='rejected').count()
+    pending_count = Offer.query.filter_by(
+        seller_id=user.id, status='pending').count()
+    accepted_count = Offer.query.filter_by(
+        seller_id=user.id, status='accepted').count()
+    rejected_count = Offer.query.filter_by(
+        seller_id=user.id, status='rejected').count()
 
     return jsonify({
         "offers": [offer.serialize() for offer in offers],
@@ -988,7 +1001,8 @@ def upload_product_images():
     if len(files) > 5:
         return jsonify({"error": "Maximum 5 images allowed per product"}), 400
 
-    results = upload_multiple_images(files, folder=f"revistete/products/{user_id}")
+    results = upload_multiple_images(
+        files, folder=f"revistete/products/{user_id}")
     successful = [r for r in results if r["success"]]
     failed = [r for r in results if not r["success"]]
     if successful:

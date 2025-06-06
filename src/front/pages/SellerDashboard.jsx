@@ -64,7 +64,7 @@ export const SellerDashboard = () => {
             }
         } catch (error) {
             console.error("Error en catch:", error);
-            console.error("Error completo:", error.message, error.stack);
+
         }
     };
 
@@ -483,7 +483,10 @@ const OffersSection = ({ onOffersUpdate }) => {
             setOffers(data.offers || []);
             setStats(data.stats || { pending: 0, accepted: 0, rejected: 0, total: 0 });
         } catch (error) {
-            console.error("Error loading offers:", error);
+            // Solo mostrar error si NO es de red
+            if (error.name !== 'TypeError') {
+                console.error("Error loading offers:", error);
+            }
         } finally {
             setIsLoading(false);
         }
